@@ -1,4 +1,8 @@
-ONETAG: (anki menu item)
+* ONETAG: (anki menu item)
+
+it turns out that Anki opens files in a way that won't allow a
+pipeline (as far as i can see), so the file itself needs to have the
+tags in it.  or, maybe /dev/fdN could be used?
 
 want a function that, given an argument, will ensure that 1) the
 current deck has only cards with TAG; 2) all cards in Anki with TAG
@@ -55,12 +59,15 @@ then, needed to copy all the files to ~/usr/lib/python/anki/ again
 
 cool.  now have an x11 version of anki ("% ./runanki").
 
-#+BEGIN_SRC python :results output :session ss
-  from aqt import mw
+#+name: anki2
+| /Users/minshall/Documents/Anki/User 1/collection.anki2 |
+
+#+name: decks
+#+BEGIN_SRC python :results output :var anki=anki2 :session ss
   from anki import importing
 
   from anki import Collection
-  col = Collection("/Users/minshall/Documents/Anki/User 1/collection.anki2")
+  col = Collection(anki[0][0])
   try:
       for i, val in enumerate(col.decks.allNames()):
           print val
@@ -69,7 +76,7 @@ cool.  now have an x11 version of anki ("% ./runanki").
       col.close()
 #+END_SRC
 
-#+RESULTS:
+#+RESULTS: decks
 : 
 : >>> >>> >>> >>> ... ... ... ... ... ... Default
 : turkish-2015
@@ -77,3 +84,20 @@ cool.  now have an x11 version of anki ("% ./runanki").
 : osmanlica-2015
 : turkish-2014
 
+#+name: cards
+#+BEGIN_SRC python :results output :var anki=anki2 deck="turkish-2015" :session ss
+  from anki import importing
+
+  from anki import Collection
+  col = Collection(anki[0][0])
+  try:
+      ids = col.findCards("deck:%s" % deck)
+      for i, id in enumerate(ids):
+          card = col.getCard(id)
+          print i # "%s\t%s\t\n" % (card.q(), card.a())
+      col.close()
+  except:
+      col.close()
+#+END_SRC
+
+#+RESULTS: cards
