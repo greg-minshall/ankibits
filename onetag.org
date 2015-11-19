@@ -1,0 +1,79 @@
+ONETAG: (anki menu item)
+
+want a function that, given an argument, will ensure that 1) the
+current deck has only cards with TAG; 2) all cards in Anki with TAG
+are in that deck.
+
+so, first, find all cards *not* in the current deck with TAG.  then,
+move all those cards from their previous deck to the current deck.
+
+XXX should we check we're not moving *too* many cards?
+
+then, search the current deck and find all cards that do *not* have
+the the designated tag.  delete all those cards.
+
+XXX same, should we check we're not deleting too many cards?
+
+remove the menu item (or, at least, the pre-canned tag)
+
+after all this, *delete* the tags from all cards in the current
+deck.
+
+ANKI-IMPORT: (shell command)
+usage: run the import operation, which cons up TAG, and adds it to
+all the cards in the deck, then imports the cards into the named
+deck: ./anki-import turkish-2015 turkish-2015.html after the import,
+prime a menu item in Anki (with a shortcut, hopefully), that will
+cause onetag to run with the correct tag.
+
+one function: given a file name and a deck name, import the contents
+of that file into that deck.  need to have it tell how many fields
+it will find (maybe separate function for that?).
+
+one function: given a search expression (such as "deck:current
+tag:fubar"), execute the search, and then execute a "move" to a
+designated deck (which must already exist).
+
+one function: given a search expression, execute the search and
+print out the resulting cards.
+
+one function: print the names of the existing decks.
+
+one function: remove a given tag from a given (all?) deck(s?).
+
+to get anki to work, need to run ./tools/build-ui.sh.  for *that*,
+needed something from Qt designer, which required installing a bunch
+of Qt.  then, to actually run it, needed to extend path, which i did
+by
+#+BEGIN_EXAMPLE
+bash
+PATH=/sw/lib/qt4-mac/lib/python2.7/bin/:$PATH
+./tools/build_ui.sh 
+#+END_EXAMPLE
+then, needed to copy all the files to ~/usr/lib/python/anki/ again
+(i.e., *after* running ./tools/build-ui.sh).
+
+cool.  now have an x11 version of anki ("% ./runanki").
+
+#+BEGIN_SRC python :results output :session ss
+  from aqt import mw
+  from anki import importing
+
+  from anki import Collection
+  col = Collection("/Users/minshall/Documents/Anki/User 1/collection.anki2")
+  try:
+      for i, val in enumerate(col.decks.allNames()):
+          print val
+      col.close()
+  except:
+      col.close()
+#+END_SRC
+
+#+RESULTS:
+: 
+: >>> >>> >>> >>> ... ... ... ... ... ... Default
+: turkish-2015
+: Custom Study Session
+: osmanlica-2015
+: turkish-2014
+
