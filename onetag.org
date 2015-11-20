@@ -1,5 +1,7 @@
 * ONETAG: (anki menu item)
 
+** what we want to do
+
 it turns out that Anki opens files in a way that won't allow a
 pipeline (as far as i can see), so the file itself needs to have the
 tags in it.  or, maybe /dev/fdN could be used?
@@ -59,15 +61,25 @@ then, needed to copy all the files to ~/usr/lib/python/anki/ again
 
 cool.  now have an x11 version of anki ("% ./runanki").
 
+** some code
 #+name: anki2
 | /Users/minshall/Documents/Anki/User 1/collection.anki2 |
+#+name: deck
+| testdeck |
+
+
+#+BEGIN_SRC python :var a=deck[0,0] :results results raw :session ss
+#+END_SRC
+
+#+RESULTS:
+testdeck
+
 
 #+name: decks
-#+BEGIN_SRC python :results output :var anki=anki2 :session ss
+#+BEGIN_SRC python :var anki=anki2[0,0] :results output
   from anki import importing
-
   from anki import Collection
-  col = Collection(anki[0][0])
+  col = Collection(anki)
   try:
       for i, val in enumerate(col.decks.allNames()):
           print val
@@ -77,14 +89,54 @@ cool.  now have an x11 version of anki ("% ./runanki").
 #+END_SRC
 
 #+RESULTS: decks
-: 
-: >>> >>> >>> >>> ... ... ... ... ... ... Default
-: turkish-2015
 : Custom Study Session
 : osmanlica-2015
+: testdeck
 : turkish-2014
+: Default
+: turkish-2015
 
 #+name: cards
+#+BEGIN_SRC python :results output :var anki=anki2[0,0] deck=deck[0,0] :session ss
+  from anki import importing
+
+  from anki import Collection
+  col = Collection(anki[0][0])
+  try:
+      ids = col.findCards("deck:%s" % deck)
+      print len(ids)
+      # for i, id in enumerate(ids):
+      # card = col.getCard(id)
+      # print i # "%s\t%s\t\n" % (card.q(), card.a())
+      col.close()
+  except:
+      col.close()
+#+END_SRC
+
+#+RESULTS: cards
+: 
+: >>> >>> >>> >>> >>> ... ... ... ... ... ... ... ... ... 911
+
+#+name: notes
+#+BEGIN_SRC python :results output :var anki=anki2 deck="turkish-2015" :session ss
+  from anki import importing
+
+  from anki import Collection
+  col = Collection(anki[0][0])
+  try:
+      ids = col.findNotes("deck:%s" % deck)
+      for i, id in enumerate(ids):
+          note = col.getNote(id)
+          values = note.values();
+          print "%s\t%s" % (values[0], values[1])
+      col.close()
+  except:
+      col.close()
+#+END_SRC
+
+#+RESULTS: notes
+
+#+name: tags
 #+BEGIN_SRC python :results output :var anki=anki2 deck="turkish-2015" :session ss
   from anki import importing
 
@@ -92,12 +144,11 @@ cool.  now have an x11 version of anki ("% ./runanki").
   col = Collection(anki[0][0])
   try:
       ids = col.findCards("deck:%s" % deck)
-      for i, id in enumerate(ids):
-          card = col.getCard(id)
-          print i # "%s\t%s\t\n" % (card.q(), card.a())
+      print len(ids)
+      # for i, id in enumerate(ids):
+      # card = col.getCard(id)
+      # print i # "%s\t%s\t\n" % (card.q(), card.a())
       col.close()
   except:
       col.close()
 #+END_SRC
-
-#+RESULTS: cards
