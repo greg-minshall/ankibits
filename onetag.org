@@ -131,18 +131,52 @@ testdeck
 #+BEGIN_SRC python :session ss :results output :var anki=anki2[0,0] :var deck=deck[0,0] :var imfile=imfile[0,0]
   from anki import Collection
   from anki.importing import TextImporter
+  from anki import TagManager
 
-  col = Collection(anki)
-  try:
-      # http://ankisrs.net/docs/addons.html#the-database
-      did = col.decks.id("ImportDeck")
+  def constag():
+      import time;
+      return "asof%d" % time.time();
+
+  # get foreign notes: these aren't (yet) real Anki notes, just a
+  # represenation that has been read in.
+  def getfnotes(ti):
+      # now, get the notes
+      fnotes = ti.foreignNotes();
+      return fnotes;
+
+  def addtag(ti, fnotes, tag):
+      for i, fn in enumerate(fnotes):
+          fn.tags[0] = tag
+
+  def add2col(col, deck, ti, fnotes):
+      # XXX should we remember previously selected deck (and reselect it
+      # when we're done here)?
+      did = col.decks.id(deck)
       col.decks.select(did)
-      ti = TextImporter(col, imfile)
-      notes = ti.foreignNotes();
-      print notes;
-      col.close()
-  except:
-      col.close()
+      ti.importNotes()
+
+  # http://ankisrs.net/docs/addons.html#the-database
+  def run():
+      tag = constag();            # just run once!
+      col = Collection(anki)
+      try:
+          ti = TextImporter(col, imfile)
+          # first, get anki read in the notes (to an intermediate form)
+          fnotes = getfnotes(ti)
+          # next, add our tag to the notes
+          addtag(ti, fnotes, tag)
+          # now, add these notes to the designated deck
+          add2col(col, deck, ti, fnotes)
+          del ti;                 # no longer to be used
+          # now, delete any notes in deck that do *not* have this tag
+          delnontagged(col, tag, deck)
+          # now, move any notes from any *other* cards with this tag to this deck
+          movetagged(col, tag, deck)
+          # now, delete this tag from these cards (no other cards should have this tag)
+          # done!
+          col.close()
+      except:
+          col.close()
 #+END_SRC
 
 #+RESULTS: import
