@@ -80,13 +80,20 @@ testdeck
 #+name: decks
 #+BEGIN_SRC python :var anki=anki2[0,0] :results output
   from anki import Collection
-  col = Collection(anki)
-  try:
+
+  def pdecks(col):
       for i, val in enumerate(col.decks.allNames()):
           print val
-      col.close()
-  except:
-      col.close()
+
+  def pdecksrun():
+      col = Collection(anki)
+      try:
+          pdecks(col)
+          col.close()
+      except:
+          col.close()
+
+  pdecksrun();
 #+END_SRC
 
 #+RESULTS: decks
@@ -100,16 +107,23 @@ testdeck
 #+name: notes
 #+BEGIN_SRC python :results output :var anki=anki2[0,0] deck=deck[0,0] :session ss
   from anki import Collection
-  col = Collection(anki)
-  try:
+
+  def pnotes(col):
       ids = col.findNotes("deck:%s" % deck)
       for i, id in enumerate(ids):
           note = col.getNote(id)
           values = note.values();
           print "%s\t%s" % (values[0], values[1])
-      col.close()
-  except:
-      col.close()
+
+  def pnotesrun():
+      col = Collection(anki)
+      try:
+          pnotes()
+          col.close()
+      except:
+          col.close()
+
+  pnotesrun();
 #+END_SRC
 
 #+RESULTS: notes
@@ -153,7 +167,7 @@ testdeck
       # when we're done here)?
       did = col.decks.id(deck)
       col.decks.select(did)
-      ti.importNotes()
+      ti.importNotes(fnotes)
 
   # http://ankisrs.net/docs/addons.html#the-database
   def run():
@@ -180,3 +194,8 @@ testdeck
 #+END_SRC
 
 #+RESULTS: import
+: 
+: >>>   File "<stdin>", line 1
+:     import codecs, os;__pyfile = codecs.open('''/var/folders/qc/gxydc5q150qbr2mndftfyrmw0000gn/T/py149540Oy''', encoding='''utf-8''');__code = __pyfile.read().encode('''utf-8''');__pyfile.close();os.remove('''/var/folders/qc/gxydc5q150qbr2mndftfyrmw0000gn/T/py149540Oy''');exec(compile(__code, import codecs, os;__pyfile = codecs.open('''/var/folders/qc/gxydc5q150qbr2mndanki="/Users/minshall/Documents/Anki/User 1/collection.anki2"
+:                                                                                                                                                                                                                                                                                                            ^
+: SyntaxError: invalid syntax
