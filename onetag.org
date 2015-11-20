@@ -67,7 +67,7 @@ cool.  now have an x11 version of anki ("% ./runanki").
 #+name: deck
 | testdeck |
 #+name: imfile
-| ./test.html |
+| /Users/minshall/src/mine/ankiplugins/test.html |
 
 
 #+BEGIN_SRC python :var a=deck[0,0] :results results raw :session ss
@@ -131,7 +131,7 @@ testdeck
 #+BEGIN_SRC python :session ss :results output :var anki=anki2[0,0] :var deck=deck[0,0] :var imfile=imfile[0,0]
   from anki import Collection
   from anki.importing import TextImporter
-  from anki import TagManager
+  from anki.tags import TagManager
 
   def constag():
       import time;
@@ -146,7 +146,7 @@ testdeck
 
   def addtag(ti, fnotes, tag):
       for i, fn in enumerate(fnotes):
-          fn.tags[0] = tag
+          fn.tags.append(tag)
 
   def add2col(col, deck, ti, fnotes):
       # XXX should we remember previously selected deck (and reselect it
