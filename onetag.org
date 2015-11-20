@@ -66,6 +66,8 @@ cool.  now have an x11 version of anki ("% ./runanki").
 | /Users/minshall/Documents/Anki/User 1/collection.anki2 |
 #+name: deck
 | testdeck |
+#+name: imfile
+| ./test.html |
 
 
 #+BEGIN_SRC python :var a=deck[0,0] :results results raw :session ss
@@ -77,7 +79,6 @@ testdeck
 
 #+name: decks
 #+BEGIN_SRC python :var anki=anki2[0,0] :results output
-  from anki import importing
   from anki import Collection
   col = Collection(anki)
   try:
@@ -96,33 +97,10 @@ testdeck
 : Default
 : turkish-2015
 
-#+name: cards
-#+BEGIN_SRC python :results output :var anki=anki2[0,0] deck=deck[0,0] :session ss
-  from anki import importing
-
-  from anki import Collection
-  col = Collection(anki[0][0])
-  try:
-      ids = col.findCards("deck:%s" % deck)
-      print len(ids)
-      # for i, id in enumerate(ids):
-      # card = col.getCard(id)
-      # print i # "%s\t%s\t\n" % (card.q(), card.a())
-      col.close()
-  except:
-      col.close()
-#+END_SRC
-
-#+RESULTS: cards
-: 
-: >>> >>> >>> >>> >>> ... ... ... ... ... ... ... ... ... 911
-
 #+name: notes
-#+BEGIN_SRC python :results output :var anki=anki2 deck="turkish-2015" :session ss
-  from anki import importing
-
+#+BEGIN_SRC python :results output :var anki=anki2[0,0] deck=deck[0,0] :session ss
   from anki import Collection
-  col = Collection(anki[0][0])
+  col = Collection(anki)
   try:
       ids = col.findNotes("deck:%s" % deck)
       for i, id in enumerate(ids):
@@ -137,18 +115,34 @@ testdeck
 #+RESULTS: notes
 
 #+name: tags
-#+BEGIN_SRC python :results output :var anki=anki2 deck="turkish-2015" :session ss
-  from anki import importing
-
+#+BEGIN_SRC python :results output :var anki=anki2[0,0] deck=deck[0,0] :session ss
   from anki import Collection
-  col = Collection(anki[0][0])
+  col = Collection(anki)
   try:
       ids = col.findCards("deck:%s" % deck)
-      print len(ids)
-      # for i, id in enumerate(ids):
-      # card = col.getCard(id)
-      # print i # "%s\t%s\t\n" % (card.q(), card.a())
       col.close()
   except:
       col.close()
 #+END_SRC
+
+#+RESULTS: tags
+
+#+name: import
+#+BEGIN_SRC python :session ss :results output :var anki=anki2[0,0] :var deck=deck[0,0] :var imfile=imfile[0,0]
+  from anki import Collection
+  from anki.importing import TextImporter
+
+  col = Collection(anki)
+  try:
+      # http://ankisrs.net/docs/addons.html#the-database
+      did = col.decks.id("ImportDeck")
+      col.decks.select(did)
+      ti = TextImporter(col, imfile)
+      notes = ti.foreignNotes();
+      print notes;
+      col.close()
+  except:
+      col.close()
+#+END_SRC
+
+#+RESULTS: import
