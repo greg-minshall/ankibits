@@ -118,7 +118,7 @@ testdeck
   def pnotesrun():
       col = Collection(anki)
       try:
-          pnotes()
+          pnotes(col)
           col.close()
       except:
           col.close()
@@ -142,7 +142,7 @@ testdeck
 #+RESULTS: tags
 
 #+name: import
-#+BEGIN_SRC python :session ss :results output :var anki=anki2[0,0] :var deck=deck[0,0] :var imfile=imfile[0,0]
+#+BEGIN_SRC python :session ss :results output :var ankipath=anki2[0,0] :var deckname=deck[0,0] :var imfile=imfile[0,0]
   from anki import Collection
   from anki.importing import TextImporter
   from anki.tags import TagManager
@@ -162,17 +162,17 @@ testdeck
       for i, fn in enumerate(fnotes):
           fn.tags.append(tag)
 
-  def add2col(col, deck, ti, fnotes):
+  def add2col(col, deckname, ti, fnotes):
       # XXX should we remember previously selected deck (and reselect it
       # when we're done here)?
-      did = col.decks.id(deck)
+      did = col.decks.id(deckname)
       col.decks.select(did)
       ti.importNotes(fnotes)
 
   # http://ankisrs.net/docs/addons.html#the-database
   def run():
       tag = constag();            # just run once!
-      col = Collection(anki)
+      col = Collection(ankipath)
       try:
           ti = TextImporter(col, imfile)
           # first, get anki read in the notes (to an intermediate form)
@@ -180,12 +180,12 @@ testdeck
           # next, add our tag to the notes
           addtag(ti, fnotes, tag)
           # now, add these notes to the designated deck
-          add2col(col, deck, ti, fnotes)
+          add2col(col, deckname, ti, fnotes)
           del ti;                 # no longer to be used
           # now, delete any notes in deck that do *not* have this tag
-          delnontagged(col, tag, deck)
+          delnontagged(col, tag, deckname)
           # now, move any notes from any *other* cards with this tag to this deck
-          movetagged(col, tag, deck)
+          movetagged(col, tag, deckname)
           # now, delete this tag from these cards (no other cards should have this tag)
           # done!
           col.close()
@@ -199,3 +199,19 @@ testdeck
 :     import codecs, os;__pyfile = codecs.open('''/var/folders/qc/gxydc5q150qbr2mndftfyrmw0000gn/T/py149540Oy''', encoding='''utf-8''');__code = __pyfile.read().encode('''utf-8''');__pyfile.close();os.remove('''/var/folders/qc/gxydc5q150qbr2mndftfyrmw0000gn/T/py149540Oy''');exec(compile(__code, import codecs, os;__pyfile = codecs.open('''/var/folders/qc/gxydc5q150qbr2mndanki="/Users/minshall/Documents/Anki/User 1/collection.anki2"
 :                                                                                                                                                                                                                                                                                                            ^
 : SyntaxError: invalid syntax
+
+** some bugs maybe in dae's code/documentation
+
+*** [[http://ankisrs.net/docs/addons.html][add-on documentation]] bugs
+
++ in "Import a text file into the collection"
+#+BEGIN_QUOTE
+deck['mid'] = m['id']
+#+END_QUOTE
+should possibly be
+#+BEGIN_QUOTE
+deck['mod'] = m['mod']
+#+END_QUOTE
+?
+
++ this is another
