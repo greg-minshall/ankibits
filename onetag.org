@@ -76,9 +76,29 @@ cool.  now have an x11 version of anki ("% ./runanki").
 #+RESULTS:
 testdeck
 
+#+name: collection_guard
+#+BEGIN_SRC python :session ss
+  # http://effbot.org/zone/python-with-statement.htm
+  class collection_guard:
+      def __init__(self, ankipath):
+          self.ankipath = ankipath;
+      def __enter__(self):
+          self.col = Collection(ankipath);
+          return self;
+      def __exit__(self, type, value, traceback):
+          self.col.close();
+          self.col = None
+          return False
+      def close(self):
+          self.__exit__(None, None, None)
+#+END_SRC
+
+#+RESULTS: collection_guard
+
+
 
 #+name: decks
-#+BEGIN_SRC python :var anki=anki2[0,0] :results output
+#+BEGIN_SRC python :var ankipath=anki2[0,0] :results output :session ss
   from anki import Collection
 
   def pdecks(col):
@@ -86,26 +106,24 @@ testdeck
           print val
 
   def pdecksrun():
-      col = Collection(anki)
-      try:
-          pdecks(col)
-          col.close()
-      except:
-          col.close()
+      with collection_guard(ankipath) as cg:
+          pdecks(cg.col)
 
   pdecksrun();
 #+END_SRC
 
 #+RESULTS: decks
-: Custom Study Session
+: 
+: >>> >>> ... ... ... >>> ... ... ... >>> Custom Study Session
 : osmanlica-2015
 : testdeck
 : turkish-2014
 : Default
 : turkish-2015
+: ImportDeck
 
 #+name: notes
-#+BEGIN_SRC python :results output :var anki=anki2[0,0] deck=deck[0,0] :session ss
+#+BEGIN_SRC python :results output :var ankipath=anki2[0,0] deck=deck[0,0] :session ss
   from anki import Collection
 
   def pnotes(col):
@@ -116,12 +134,8 @@ testdeck
           print "%s\t%s" % (values[0], values[1])
 
   def pnotesrun():
-      col = Collection(anki)
-      try:
-          pnotes(col)
-          col.close()
-      except:
-          col.close()
+      with collection_guard(ankipath) as cg:
+          pnotes(cg.col)
 
   pnotesrun();
 #+END_SRC
@@ -131,12 +145,8 @@ testdeck
 #+name: tags
 #+BEGIN_SRC python :results output :var anki=anki2[0,0] deck=deck[0,0] :session ss
   from anki import Collection
-  col = Collection(anki)
-  try:
-      ids = col.findCards("deck:%s" % deck)
-      col.close()
-  except:
-      col.close()
+  with collection_guard(ankipath) as cg:
+      ids = cg.col.findCards("deck:%s" % deck)
 #+END_SRC
 
 #+RESULTS: tags
@@ -169,11 +179,13 @@ testdeck
       col.decks.select(did)
       ti.importNotes(fnotes)
 
+
   # http://ankisrs.net/docs/addons.html#the-database
   def run():
       tag = constag();            # just run once!
       col = Collection(ankipath)
-      try:
+      with collection_guard(ankipath) as col_guard:
+          col = col_guard.col
           ti = TextImporter(col, imfile)
           # first, get anki read in the notes (to an intermediate form)
           fnotes = getfnotes(ti)
@@ -188,9 +200,6 @@ testdeck
           movetagged(col, tag, deckname)
           # now, delete this tag from these cards (no other cards should have this tag)
           # done!
-          col.close()
-      except:
-          col.close()
 #+END_SRC
 
 #+RESULTS: import
