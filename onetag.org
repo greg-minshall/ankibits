@@ -63,7 +63,7 @@ cool.  now have an x11 version of anki ("% ./runanki").
 
 ** some code
 #+name: anki2
-| /Users/minshall/Documents/Anki/User 1/collection.anki2 |
+| /Users/minshall/Documents/Anki/test/collection.anki2 |
 #+name: deck
 | testdeck |
 #+name: imfile
@@ -134,21 +134,35 @@ from http://effbot.org/zone/python-with-statement.htm
 #+BEGIN_SRC python :results output :var ankipath=anki2[0,0] deck=deck[0,0] :session ss
   from anki import Collection
 
-  def pnotes(col):
+  def pnotes(col, deck):
       ids = col.findNotes("deck:%s" % deck)
       for i, id in enumerate(ids):
           note = col.getNote(id)
           values = note.values();
           print "%s\t%s" % (values[0], values[1])
 
-  def pnotesrun():
+  def pnotesrun(ankipath, deck):
       with collection_guard(ankipath) as cg:
           pnotes(cg.col)
 
-  pnotesrun();
+  pnotesrun(ankipath, deck);
 #+END_SRC
 
 #+RESULTS: notes
+#+begin_example
+
+>>> >>> >>> ... ... ... ... ... ... >>> ... ... ... >>> Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "<stdin>", line 2, in pnotesrun
+  File "<stdin>", line 6, in __enter__
+  File "/Users/minshall/usr/lib/python/anki/anki/storage.py", line 51, in Collection
+    col.lock()
+  File "/Users/minshall/usr/lib/python/anki/anki/collection.py", line 144, in lock
+    self.db.execute("update col set mod=mod")
+  File "/Users/minshall/usr/lib/python/anki/anki/db.py", line 43, in execute
+    res = self._db.execute(sql, a)
+sqlite3.OperationalError: database is locked
+#+end_example
 
 #+name: tags
 #+BEGIN_SRC python :results output :var anki=anki2[0,0] deck=deck[0,0] :session ss
@@ -193,6 +207,7 @@ from http://effbot.org/zone/python-with-statement.htm
       with collection_guard(ankipath) as cg:
           col = cg.col
           ti = TextImporter(col, imfile)
+          ti.initMapping();
           # first, get anki read in the notes (to an intermediate form)
           fnotes = getfnotes(ti)
           # next, add our tag to the notes
@@ -210,6 +225,30 @@ from http://effbot.org/zone/python-with-statement.htm
 
 #+RESULTS: import
 
+here's (more or less) DAE's example
+#+BEGIN_SRC python :session that
+
+
+  from anki import Collection
+  from anki.importing import TextImporter
+  file = u"/Users/minshall/src/mine/ankiplugins/test.html"
+  # select deck
+  col = Collection("/Users/minshall/Documents/Anki/test/collection.anki2");
+  did = col.decks.id("decktest")
+  col.decks.select(did)
+  # set note type for deck
+  m = col.models.byName("Basic")
+  deck = col.decks.get(did)
+  deck['mid'] = m['id']
+  col.decks.save(deck)
+  # import into the collection
+  ti = TextImporter(col, file)
+  ti.initMapping()
+  ti.run()
+#+END_SRC
+
+#+RESULTS:
+
 ** some bugs maybe in dae's code/documentation
 
 *** [[http://ankisrs.net/docs/addons.html][add-on documentation]] bugs
@@ -224,4 +263,6 @@ deck['mod'] = m['mod']
 #+END_QUOTE
 ?
 
-+ this is another
++ also, i run this code, and my cards get added to the "Default" deck
+  (rather than to the one i looked up using col.decks.id).
+
