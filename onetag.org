@@ -82,7 +82,7 @@ include some extraordinary event, such as a core dump.)  this comes
 from http://effbot.org/zone/python-with-statement.htm
 
 #+name: collection_guard
-#+BEGIN_SRC python :session ss
+#+BEGIN_SRC python :session ss :results silent
   class collection_guard:
       def __init__(self, ankipath):
           self.ankipath = ankipath;
@@ -101,10 +101,6 @@ from http://effbot.org/zone/python-with-statement.htm
           self.__exit__(None, None, None)
 #+END_SRC
 
-#+RESULTS: collection_guard
-
-
-
 #+name: decks
 #+BEGIN_SRC python :var ankipath=anki2[0,0] :results output :session ss
   from anki import Collection
@@ -122,53 +118,38 @@ from http://effbot.org/zone/python-with-statement.htm
 
 #+RESULTS: decks
 : 
-: >>> >>> ... ... ... >>> ... ... ... >>> Custom Study Session
-: osmanlica-2015
+: >>> ... ... ... >>> ... ... ... >>> Default
 : testdeck
-: turkish-2014
-: Default
-: turkish-2015
-: ImportDeck
+: decktest
 
 #+name: notes
-#+BEGIN_SRC python :results output :var ankipath=anki2[0,0] deck=deck[0,0] :session ss
+#+BEGIN_SRC python :results output :var ankipath=anki2[0,0] deckname=deck[0,0] :session ss
   from anki import Collection
 
-  def pnotes(col, deck):
-      ids = col.findNotes("deck:%s" % deck)
+  def pnotes(col, deckname):
+      ids = col.findNotes("deck:%s" % deckname)
+      print ids;
       for i, id in enumerate(ids):
           note = col.getNote(id)
           values = note.values();
           print "%s\t%s" % (values[0], values[1])
 
-  def pnotesrun(ankipath, deck):
+  def pnotesrun(ankipath, deckname):
       with collection_guard(ankipath) as cg:
-          pnotes(cg.col)
+          pnotes(cg.col, deckname)
 
-  pnotesrun(ankipath, deck);
+  pnotesrun(ankipath, deckname);
 #+END_SRC
 
 #+RESULTS: notes
-#+begin_example
-
->>> >>> >>> ... ... ... ... ... ... >>> ... ... ... >>> Traceback (most recent call last):
-  File "<stdin>", line 1, in <module>
-  File "<stdin>", line 2, in pnotesrun
-  File "<stdin>", line 6, in __enter__
-  File "/Users/minshall/usr/lib/python/anki/anki/storage.py", line 51, in Collection
-    col.lock()
-  File "/Users/minshall/usr/lib/python/anki/anki/collection.py", line 144, in lock
-    self.db.execute("update col set mod=mod")
-  File "/Users/minshall/usr/lib/python/anki/anki/db.py", line 43, in execute
-    res = self._db.execute(sql, a)
-sqlite3.OperationalError: database is locked
-#+end_example
+: 
+: >>> >>> >>> ... ... ... ... ... ... ... >>> ... ... ... >>> []
 
 #+name: tags
-#+BEGIN_SRC python :results output :var anki=anki2[0,0] deck=deck[0,0] :session ss
+#+BEGIN_SRC python :results output :var anki=anki2[0,0] deckname=deck[0,0] :session ss
   from anki import Collection
   with collection_guard(ankipath) as cg:
-      ids = cg.col.findCards("deck:%s" % deck)
+      ids = cg.col.findCards("deck:%s" % deckname)
 #+END_SRC
 
 #+RESULTS: tags
@@ -202,7 +183,7 @@ sqlite3.OperationalError: database is locked
       ti.importNotes(fnotes)
 
   # http://ankisrs.net/docs/addons.html#the-database
-  def run():
+  def run(ankipath, deckname):
       tag = constag();            # just run once!
       with collection_guard(ankipath) as cg:
           col = cg.col
@@ -221,14 +202,38 @@ sqlite3.OperationalError: database is locked
           movetagged(col, tag, deckname)
           # now, delete this tag from these cards (no other cards should have this tag)
           # done!
+
+  run(ankipath, deckname)
 #+END_SRC
 
 #+RESULTS: import
+: 
+: >>> >>> >>> >>> >>> >>> ... ... ... >>> ... ... ... ... ... ... >>> ... ... ... >>> ... ... ... ... ... ... >>> ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... >>> Traceback (most recent call last):
+:   File "<stdin>", line 1, in <module>
+:   File "<stdin>", line 16, in run
+: NameError: global name 'delnontagged' is not defined
 
-here's (more or less) DAE's example
+
+
+
+** some bugs maybe in dae's code/documentation
+
+*** [[http://ankisrs.net/docs/addons.html][add-on documentation]] bugs
+
++ in "Import a text file into the collection", should
+#+BEGIN_QUOTE
+deck['mid'] = m['id']
+#+END_QUOTE
+possibly be
+#+BEGIN_QUOTE
+deck['mod'] = m['mod']
+#+END_QUOTE
+?
+
++ also, i run this code, and my cards get added to the "Default" deck
+  (rather than to the one i looked up using col.decks.id).  here's
+  (more or less) DAE's example:
 #+BEGIN_SRC python :session that
-
-
   from anki import Collection
   from anki.importing import TextImporter
   file = u"/Users/minshall/src/mine/ankiplugins/test.html"
@@ -247,22 +252,4 @@ here's (more or less) DAE's example
   ti.run()
 #+END_SRC
 
-#+RESULTS:
-
-** some bugs maybe in dae's code/documentation
-
-*** [[http://ankisrs.net/docs/addons.html][add-on documentation]] bugs
-
-+ in "Import a text file into the collection"
-#+BEGIN_QUOTE
-deck['mid'] = m['id']
-#+END_QUOTE
-should possibly be
-#+BEGIN_QUOTE
-deck['mod'] = m['mod']
-#+END_QUOTE
-?
-
-+ also, i run this code, and my cards get added to the "Default" deck
-  (rather than to the one i looked up using col.decks.id).
 
