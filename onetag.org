@@ -76,26 +76,35 @@ deck['mod'] = m['mod']
 ?
 
 + also, i run this code, and my cards get added to the "Default" deck
-  (rather than to the one i looked up using col.decks.id).  here's
-  (more or less) DAE's example:
-#+BEGIN_SRC python :session that
+  (rather than to the one i looked up using col.decks.id), or (it
+  appears) whichever deck was most recently "selected".  here's (more
+  or less) DAE's example:
+#+BEGIN_SRC python :var TEXT_FILE_PATH="/Users/minshall/src/mine/ankiplugins/test.html" :var COLLECTION_FILE_PATH="/Users/minshall/Documents/Anki/test/collection.anki2" :var DECK_NAME="testdeck"
   from anki import Collection
   from anki.importing import TextImporter
-  file = u"/Users/minshall/src/mine/ankiplugins/test.html"
-  # select deck
-  col = Collection("/Users/minshall/Documents/Anki/test/collection.anki2");
-  did = col.decks.id("decktest")
-  col.decks.select(did)
-  # set note type for deck
-  m = col.models.byName("Basic")
-  deck = col.decks.get(did)
-  deck['mid'] = m['id']
-  col.decks.save(deck)
-  # import into the collection
+  file = TEXT_FILE_PATH
+  collection = COLLECTION_FILE_PATH
+  deckName = DECK_NAME
+  col = Collection(collection)
   ti = TextImporter(col, file)
+  # get note type for deck (could be a parameter)
+  m = col.models.byName("Basic")
+  # select deck
+  did = col.decks.id(deckName)
+  # make sure we are importing to desired deck
+  col.decks.select(did)
+  if did != ti.model['did']:
+     ti.model['did'] = did
+     col.models.save(ti.model)
+  # import into the collection
   ti.initMapping()
   ti.run()
+  col.close()
 #+END_SRC
+
+#+RESULTS:
+: None
+
   it appears that the fnotes themselves maybe contain information
   about the destination deck.  or, at least, that when importing, one
   of the rows in addNew is supposed to contain the deck name?
@@ -222,10 +231,10 @@ from http://effbot.org/zone/python-with-statement.htm
       # XXX should we remember previously selected deck (and reselect it
       # when we're done here)?
       did = col.decks.id(deckname)
-      def shouldbelambda(fnote):
-          fnote.deck = did
-      map(shouldbelambda, fnotes)
-      col.decks.select(did)       # XXX is this necessary?
+      if did != ti.model['did']:
+          ti.model['did'] = did
+          col.models.save(ti.model)
+      col.decks.select(did)
       ti.importNotes(fnotes)
 
   # http://ankisrs.net/docs/addons.html#the-database
@@ -254,7 +263,7 @@ from http://effbot.org/zone/python-with-statement.htm
 
 #+RESULTS: import
 : 
-: >>> >>> >>> >>> >>> >>> ... ... ... >>> ... ... ... ... >>> ... ... ... >>> ... ... ... ... ... ... >>> ... >>> Traceback (most recent call last):
+: >>> >>> >>> >>> >>> >>> ... ... ... >>> ... ... ... ... ... ... >>> ... ... ... >>> ... ... ... ... ... ... ... ... ... >>> ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... >>> Traceback (most recent call last):
 :   File "<stdin>", line 1, in <module>
 :   File "<stdin>", line 16, in run
 : NameError: global name 'delnontagged' is not defined
