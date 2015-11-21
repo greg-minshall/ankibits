@@ -76,9 +76,13 @@ cool.  now have an x11 version of anki ("% ./runanki").
 #+RESULTS:
 testdeck
 
+this allows us to open an Anki collection and ensure that the
+collection is closed "no matter what" happens.  (this does *not*
+include some extraordinary event, such as a core dump.)  this comes
+from http://effbot.org/zone/python-with-statement.htm
+
 #+name: collection_guard
 #+BEGIN_SRC python :session ss
-  # http://effbot.org/zone/python-with-statement.htm
   class collection_guard:
       def __init__(self, ankipath):
           self.ankipath = ankipath;
@@ -86,9 +90,13 @@ testdeck
           self.col = Collection(ankipath);
           return self;
       def __exit__(self, type, value, traceback):
-          self.col.close();
-          self.col = None
+          if self.col is not None:
+              self.col.close();
+              self.col = None
           return False
+      def abort(self):            # we're unhappy, so *don't* close
+          if self.col is not None:
+              self.col = None
       def close(self):
           self.__exit__(None, None, None)
 #+END_SRC
@@ -179,13 +187,11 @@ testdeck
       col.decks.select(did)
       ti.importNotes(fnotes)
 
-
   # http://ankisrs.net/docs/addons.html#the-database
   def run():
       tag = constag();            # just run once!
-      col = Collection(ankipath)
-      with collection_guard(ankipath) as col_guard:
-          col = col_guard.col
+      with collection_guard(ankipath) as cg:
+          col = cg.col
           ti = TextImporter(col, imfile)
           # first, get anki read in the notes (to an intermediate form)
           fnotes = getfnotes(ti)
@@ -203,11 +209,6 @@ testdeck
 #+END_SRC
 
 #+RESULTS: import
-: 
-: >>>   File "<stdin>", line 1
-:     import codecs, os;__pyfile = codecs.open('''/var/folders/qc/gxydc5q150qbr2mndftfyrmw0000gn/T/py149540Oy''', encoding='''utf-8''');__code = __pyfile.read().encode('''utf-8''');__pyfile.close();os.remove('''/var/folders/qc/gxydc5q150qbr2mndftfyrmw0000gn/T/py149540Oy''');exec(compile(__code, import codecs, os;__pyfile = codecs.open('''/var/folders/qc/gxydc5q150qbr2mndanki="/Users/minshall/Documents/Anki/User 1/collection.anki2"
-:                                                                                                                                                                                                                                                                                                            ^
-: SyntaxError: invalid syntax
 
 ** some bugs maybe in dae's code/documentation
 
