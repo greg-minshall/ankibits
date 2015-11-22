@@ -134,7 +134,7 @@ include some extraordinary event, such as a core dump.)  this comes
 from http://effbot.org/zone/python-with-statement.htm
 
 #+name: collection_guard
-#+BEGIN_SRC python :session ss :results silent
+#+BEGIN_SRC python
   class collection_guard:
       def __init__(self, ankipath):
           self.ankipath = ankipath;
@@ -152,6 +152,9 @@ from http://effbot.org/zone/python-with-statement.htm
       def close(self):
           self.__exit__(None, None, None)
 #+END_SRC
+
+#+RESULTS: collection_guard
+: None
 
 #+name: decks
 #+BEGIN_SRC python
@@ -215,17 +218,38 @@ from http://effbot.org/zone/python-with-statement.htm
 
 #+RESULTS: tags
 
-#+name: import
-#+BEGIN_SRC python :session ss :results output :var ankipath=anki2[0,0] :var deckname=deck[0,0] :var imfile=imfile[0,0] :noweb yes
+#+name: user_interface
+#+BEGIN_SRC python
+  # two functions: one that shows the mapping, allows one to proceed or
+  # cancel (returns True or False); a second shows the results of the
+  # import, allows one to accept or abort (returns True or False)
 
+  def showMapping(ti):
+      """show the mapping (of note fields to card contents) to the user, giving him/her the opportunity to cancel the import"""
+      # from showMapping in aqt/importing.py
+      for num in range(len(ti.mapping)):
+          intro = "Field %d of file is:" % (num+1)
+          if ti.mapping[num] == "_tags":
+              where = "mapped to Tags"
+          elif ti.mapping[num]:
+              where = "mapped to %s" % ti.mapping[num]
+          else:
+              where = "<ignored>"
+          print "%s%s" % (intro, where)
+#+END_SRC
+
+
+#+name: import
+#+BEGIN_SRC python :noweb yes
   <<collection_guard>>
+  <<user_interface>>
 
   from anki import Collection
   from anki.importing import TextImporter
   from anki.tags import TagManager
 
   def constag(deckname):
-        return "fordeck%s" % deckname
+      return "fordeck%s" % deckname
 
   # get foreign notes: these aren't (yet) real Anki notes, just a
   # represenation that has been read in.
@@ -247,18 +271,6 @@ from http://effbot.org/zone/python-with-statement.htm
           col.models.save(ti.model)
       col.decks.select(did)
       ti.importNotes(fnotes)
-
-  def showMapping(ti):
-      # from showMapping in aqt/importing.py
-      for num in range(len(ti.mapping)):
-          intro = "Field %d of file is:" % (num+1)
-          if ti.mapping[num] == "_tags":
-              where = "mapped to Tags"
-          elif ti.mapping[num]:
-              where = "mapped to %s" % ti.mapping[num]
-          else:
-              where = "<ignored>"
-          print "%s%s" % (intro, where)
 
   # http://ankisrs.net/docs/addons.html#the-database
   def run(ankipath, deckname):
@@ -286,16 +298,32 @@ from http://effbot.org/zone/python-with-statement.htm
           xxx()
           # now, delete this tag from these cards (no other cards should have this tag)
           # done!
-
-  import pdb
-  pdb.run('run(ankipath, deckname)')
 #+END_SRC
 
-#+RESULTS: import
-: 
-: >>> >>> >>>   File "<stdin>", line 1
-:     <<decks>>
-:      ^
-: SyntaxError: invalid syntax
-: >>> >>> >>> >>> ... ... >>> ... ... ... ... ... ... >>> ... ... ... >>> ... ... ... ... ... ... ... ... ... >>> ... ... ... ... ... ... ... ... ... ... ... >>> ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... >>> >>> > <string>(1)<module>()
+#+BEGIN_SRC python :session ss :results output :var ankipath=anki2[0,0] :var deckname=deck[0,0] :var imfile=imfile[0,0] :noweb yes
+  <<import>>
+
+  import pdb
+  #  pdb.run('run(ankipath, deckname)')
+  run(ankipath, deckname)
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+
+>>> >>> ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... >>> ... ... ... ... ... ... ... ... ... ... ... ... >>> >>> >>> >>> >>> ... ... >>> ... ... ... ... ... ... >>> ... ... ... >>> ... ... ... ... ... ... ... ... ... >>> ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... >>> >>> ... Field 1 of file is:mapped to Front
+Field 2 of file is:mapped to Back
+Field 3 of file is:mapped to Tags
+0 notes added, 0 notes updated, 6 notes unchanged.
+First field matched: &lt;div align="center"&gt;testdeck1&lt;/div&gt;
+First field matched: &lt;div align="center"&gt;testdeck2&lt;/div&gt;
+First field matched: &lt;div align="center"&gt;testdeck3&lt;/div&gt;
+First field matched: &lt;div align="center"&gt;testdeck4&lt;/div&gt;
+First field matched: &lt;div align="center"&gt;testdeck5&lt;/div&gt;
+First field matched: &lt;div align="center"&gt;testdeck6&lt;/div&gt;
+Traceback (most recent call last):
+  File "<stdin>", line 2, in <module>
+  File "<stdin>", line 24, in run
+NameError: global name 'xxx' is not defined
+#+end_example
 
