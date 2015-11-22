@@ -236,6 +236,7 @@ from http://effbot.org/zone/python-with-statement.htm
           else:
               where = "<ignored>"
           print "%s%s" % (intro, where)
+      return True
 #+END_SRC
 
 
@@ -279,25 +280,25 @@ from http://effbot.org/zone/python-with-statement.htm
           col = cg.col
           ti = TextImporter(col, imfile)
           ti.initMapping();
-          showMapping(ti)
-          # first, get anki read in the notes (to an intermediate form)
-          fnotes = getfnotes(ti)
-          # next, add our tag to the notes
-          addtag(ti, fnotes, tag)
-          # now, add these notes to the designated deck
-          add2col(col, deckname, ti, fnotes)
-          if ti.log:
-              for txt in ti.log:
-                  print txt
-          imported = ti._ids      # cards that were imported
-          del ti;                 # no longer to be used
-          # now, move any notes from any *other* cards with this tag to this deck
-          did = col.decks.id(deckname)
-          col.decks.setDeck(imported, did)
-          # now, delete any notes in deck that do *not* have this tag
-          xxx()
-          # now, delete this tag from these cards (no other cards should have this tag)
-          # done!
+          if showMapping(ti):     # allow user to abort
+              # first, get anki read in the notes (to an intermediate form)
+              fnotes = getfnotes(ti)
+              # next, add our tag to the notes
+              addtag(ti, fnotes, tag)
+              # now, add these notes to the designated deck
+              add2col(col, deckname, ti, fnotes)
+              if ti.log:
+                  for txt in ti.log:
+                      print txt
+              imported = ti._ids      # cards that were imported
+              del ti;                 # no longer to be used
+              # now, move any notes from any *other* cards with this tag to this deck
+              did = col.decks.id(deckname)
+              col.decks.setDeck(imported, did)
+              # now, delete any notes in deck that do *not* have this tag
+              xxx()
+              # now, delete this tag from these cards (no other cards should have this tag)
+              # done!
 #+END_SRC
 
 #+BEGIN_SRC python :session ss :results output :var ankipath=anki2[0,0] :var deckname=deck[0,0] :var imfile=imfile[0,0] :noweb yes
@@ -311,7 +312,7 @@ from http://effbot.org/zone/python-with-statement.htm
 #+RESULTS:
 #+begin_example
 
->>> >>> ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... >>> ... ... ... ... ... ... ... ... ... ... ... ... >>> >>> >>> >>> >>> ... ... >>> ... ... ... ... ... ... >>> ... ... ... >>> ... ... ... ... ... ... ... ... ... >>> ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... >>> >>> ... Field 1 of file is:mapped to Front
+>>> >>> ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... >>> ... ... ... ... ... ... ... ... ... ... ... ... ... >>> >>> >>> >>> >>> ... ... >>> ... ... ... ... ... ... >>> ... ... ... >>> ... ... ... ... ... ... ... ... ... >>> ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... >>> >>> ... Field 1 of file is:mapped to Front
 Field 2 of file is:mapped to Back
 Field 3 of file is:mapped to Tags
 0 notes added, 0 notes updated, 6 notes unchanged.
