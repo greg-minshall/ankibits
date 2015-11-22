@@ -63,6 +63,10 @@ cool.  now have an x11 version of anki ("% ./runanki").
 
 ** some bugs maybe in dae's code/documentation
 
+** random documentation
+
+nice [[http://www.norvig.com/python-lisp.html][comparison]] of Python and Lisp.
+
 *** [[http://ankisrs.net/docs/addons.html][add-on documentation]] bugs
 
 + in "Import a text file into the collection", should
