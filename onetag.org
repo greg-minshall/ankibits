@@ -154,7 +154,7 @@ from http://effbot.org/zone/python-with-statement.htm
 #+END_SRC
 
 #+name: decks
-#+BEGIN_SRC python :var ankipath=anki2[0,0] :results output :session ss
+#+BEGIN_SRC python
   from anki import Collection
 
   def pdecks(col):
@@ -164,18 +164,26 @@ from http://effbot.org/zone/python-with-statement.htm
   def pdecksrun():
       with collection_guard(ankipath) as cg:
           pdecks(cg.col)
-
-  pdecksrun();
 #+END_SRC
 
-#+RESULTS: decks
+#+BEGIN_SRC python :var ankipath=anki2[0,0] :results output :session ss :noweb yes
+    <<decks>>
+
+    pdecksrun()
+#+END_SRC
+
+#+RESULTS:
 : 
-: >>> >>> ... ... ... >>> ... ... ... >>> Default
-: testdeck
-: decktest
+: >>> >>> ... ... ... >>> ... ... ...   File "<stdin>", line 4
+:     pdecksrun()
+:             ^
+: SyntaxError: invalid syntax
+
+#+RESULTS: decks
+
 
 #+name: notes
-#+BEGIN_SRC python :results output :var ankipath=anki2[0,0] deckname=deck[0,0] :session ss
+#+BEGIN_SRC python
   from anki import Collection
 
   def pnotes(col, deckname):
@@ -189,13 +197,14 @@ from http://effbot.org/zone/python-with-statement.htm
   def pnotesrun(ankipath, deckname):
       with collection_guard(ankipath) as cg:
           pnotes(cg.col, deckname)
+#+END_SRC
+
+#+BEGIN_SRC python :results output :var ankipath=anki2[0,0] deckname=deck[0,0] :session ss :noweb yes
+  <<notes>>
 
   pnotesrun(ankipath, deckname);
 #+END_SRC
 
-#+RESULTS: notes
-: 
-: >>> >>> >>> ... ... ... ... ... ... ... >>> ... ... ... >>> []
 
 #+name: tags
 #+BEGIN_SRC python :results output :var anki=anki2[0,0] deckname=deck[0,0] :session ss
