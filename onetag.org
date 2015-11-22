@@ -117,7 +117,7 @@ deck['mod'] = m['mod']
 #+name: anki2
 | /Users/minshall/Documents/Anki/test/collection.anki2 |
 #+name: deck
-| testdeck |
+| decktest |
 #+name: imfile
 | /Users/minshall/src/mine/ankiplugins/test.html |
 
@@ -170,7 +170,7 @@ from http://effbot.org/zone/python-with-statement.htm
 
 #+RESULTS: decks
 : 
-: >>> ... ... ... >>> ... ... ... >>> Default
+: >>> >>> ... ... ... >>> ... ... ... >>> Default
 : testdeck
 : decktest
 
@@ -212,9 +212,8 @@ from http://effbot.org/zone/python-with-statement.htm
   from anki.importing import TextImporter
   from anki.tags import TagManager
 
-  def constag():
-      import time;
-      return "asof%d" % time.time();
+  def constag(deckname):
+        return "fordeck%s" % deckname
 
   # get foreign notes: these aren't (yet) real Anki notes, just a
   # represenation that has been read in.
@@ -251,7 +250,7 @@ from http://effbot.org/zone/python-with-statement.htm
 
   # http://ankisrs.net/docs/addons.html#the-database
   def run(ankipath, deckname):
-      tag = constag();            # just run once!
+      tag = constag(deckname);    # just run once!
       with collection_guard(ankipath) as cg:
           col = cg.col
           ti = TextImporter(col, imfile)
@@ -266,33 +265,20 @@ from http://effbot.org/zone/python-with-statement.htm
           if ti.log:
               for txt in ti.log:
                   print txt
+          imported = ti._ids      # cards that were imported
           del ti;                 # no longer to be used
-          # now, delete any notes in deck that do *not* have this tag
-          delnontagged(col, tag, deckname)
           # now, move any notes from any *other* cards with this tag to this deck
-          movetagged(col, tag, deckname)
+          did = col.decks.id(deckname)
+          col.decks.setDeck(imported, did)
+          # now, delete any notes in deck that do *not* have this tag
+          xxx()
           # now, delete this tag from these cards (no other cards should have this tag)
           # done!
 
-  run(ankipath, deckname)
+  import pdb
+  pdb.run('run(ankipath, deckname)')
 #+END_SRC
 
 #+RESULTS: import
-#+begin_example
-
->>> >>> >>> >>> >>> >>> ... ... ... >>> ... ... ... ... ... ... >>> ... ... ... >>> ... ... ... ... ... ... ... ... ... >>> ... ... ... ... ... ... ... ... ... ... ... >>> ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... >>> 
-Field 1 of file is:mapped to Front
-Field 2 of file is:mapped to Back
-Field 3 of file is:mapped to Tags
-0 notes added, 6 notes updated, 0 notes unchanged.
-First field matched: &lt;div align="center"&gt;testdeck1&lt;/div&gt;
-First field matched: &lt;div align="center"&gt;testdeck2&lt;/div&gt;
-First field matched: &lt;div align="center"&gt;testdeck3&lt;/div&gt;
-First field matched: &lt;div align="center"&gt;testdeck4&lt;/div&gt;
-First field matched: &lt;div align="center"&gt;testdeck5&lt;/div&gt;
-First field matched: &lt;div align="center"&gt;testdeck6&lt;/div&gt;
-Traceback (most recent call last):
-  File "<stdin>", line 1, in <module>
-  File "<stdin>", line 20, in run
-NameError: global name 'delnontagged' is not defined
-#+end_example
+: 
+: >>> >>> >>> >>> >>> >>> ... ... >>> ... ... ... ... ... ... >>> ... ... ... >>> ... ... ... ... ... ... ... ... ... >>> ... ... ... ... ... ... ... ... ... ... ... >>> ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... >>> >>> > <string>(1)<module>()
