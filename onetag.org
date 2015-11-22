@@ -237,6 +237,18 @@ from http://effbot.org/zone/python-with-statement.htm
       col.decks.select(did)
       ti.importNotes(fnotes)
 
+  def showMapping(ti):
+      # from showMapping in aqt/importing.py
+      for num in range(len(ti.mapping)):
+          intro = "Field %d of file is:" % (num+1)
+          if ti.mapping[num] == "_tags":
+              where = "mapped to Tags"
+          elif ti.mapping[num]:
+              where = "mapped to %s" % ti.mapping[num]
+          else:
+              where = "<ignored>"
+          print "%s%s" % (intro, where)
+
   # http://ankisrs.net/docs/addons.html#the-database
   def run(ankipath, deckname):
       tag = constag();            # just run once!
@@ -244,12 +256,16 @@ from http://effbot.org/zone/python-with-statement.htm
           col = cg.col
           ti = TextImporter(col, imfile)
           ti.initMapping();
+          showMapping(ti)
           # first, get anki read in the notes (to an intermediate form)
           fnotes = getfnotes(ti)
           # next, add our tag to the notes
           addtag(ti, fnotes, tag)
           # now, add these notes to the designated deck
           add2col(col, deckname, ti, fnotes)
+          if ti.log:
+              for txt in ti.log:
+                  print txt
           del ti;                 # no longer to be used
           # now, delete any notes in deck that do *not* have this tag
           delnontagged(col, tag, deckname)
@@ -262,8 +278,21 @@ from http://effbot.org/zone/python-with-statement.htm
 #+END_SRC
 
 #+RESULTS: import
-: 
-: >>> >>> >>> >>> >>> >>> ... ... ... >>> ... ... ... ... ... ... >>> ... ... ... >>> ... ... ... ... ... ... ... ... ... >>> ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... >>> Traceback (most recent call last):
-:   File "<stdin>", line 1, in <module>
-:   File "<stdin>", line 16, in run
-: NameError: global name 'delnontagged' is not defined
+#+begin_example
+
+>>> >>> >>> >>> >>> >>> ... ... ... >>> ... ... ... ... ... ... >>> ... ... ... >>> ... ... ... ... ... ... ... ... ... >>> ... ... ... ... ... ... ... ... ... ... ... >>> ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... >>> 
+Field 1 of file is:mapped to Front
+Field 2 of file is:mapped to Back
+Field 3 of file is:mapped to Tags
+0 notes added, 6 notes updated, 0 notes unchanged.
+First field matched: &lt;div align="center"&gt;testdeck1&lt;/div&gt;
+First field matched: &lt;div align="center"&gt;testdeck2&lt;/div&gt;
+First field matched: &lt;div align="center"&gt;testdeck3&lt;/div&gt;
+First field matched: &lt;div align="center"&gt;testdeck4&lt;/div&gt;
+First field matched: &lt;div align="center"&gt;testdeck5&lt;/div&gt;
+First field matched: &lt;div align="center"&gt;testdeck6&lt;/div&gt;
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "<stdin>", line 20, in run
+NameError: global name 'delnontagged' is not defined
+#+end_example
