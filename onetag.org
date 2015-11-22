@@ -207,7 +207,10 @@ from http://effbot.org/zone/python-with-statement.htm
 #+RESULTS: tags
 
 #+name: import
-#+BEGIN_SRC python :session ss :results output :var ankipath=anki2[0,0] :var deckname=deck[0,0] :var imfile=imfile[0,0]
+#+BEGIN_SRC python :session ss :results output :var ankipath=anki2[0,0] :var deckname=deck[0,0] :var imfile=imfile[0,0] :noweb yes
+
+  <<collection_guard>>
+
   from anki import Collection
   from anki.importing import TextImporter
   from anki.tags import TagManager
@@ -281,4 +284,9 @@ from http://effbot.org/zone/python-with-statement.htm
 
 #+RESULTS: import
 : 
-: >>> >>> >>> >>> >>> >>> ... ... >>> ... ... ... ... ... ... >>> ... ... ... >>> ... ... ... ... ... ... ... ... ... >>> ... ... ... ... ... ... ... ... ... ... ... >>> ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... >>> >>> > <string>(1)<module>()
+: >>> >>> >>>   File "<stdin>", line 1
+:     <<decks>>
+:      ^
+: SyntaxError: invalid syntax
+: >>> >>> >>> >>> ... ... >>> ... ... ... ... ... ... >>> ... ... ... >>> ... ... ... ... ... ... ... ... ... >>> ... ... ... ... ... ... ... ... ... ... ... >>> ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... >>> >>> > <string>(1)<module>()
+
