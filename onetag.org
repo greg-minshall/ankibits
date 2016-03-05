@@ -25,7 +25,7 @@ remove the menu item (or, at least, the pre-canned tag)
 after all this, *delete* the tags from all cards in the current
 deck.
 
-ANKI-IMPORT: (shell command)
+*** ANKI-IMPORT: (shell command)
 usage: run the import operation, which cons up TAG, and adds it to
 all the cards in the deck, then imports the cards into the named
 deck: ./anki-import turkish-2015 turkish-2015.html after the import,
@@ -46,6 +46,17 @@ print out the resulting cards.
 one function: print the names of the existing decks.
 
 one function: remove a given tag from a given (all?) deck(s?).
+
+*** anki-decks [--user username] [--path pathname]
+
+list the decks in the collection.  the optional argument /username/
+argument specifies the "username" of the Anki collection.
+
+the optional /pathname/ (typically something like ~/Documents/Anki/)
+is the pathname where Anki collections are stored.
+
+
+** X11 anki
 
 to get anki to work, need to run ./tools/build-ui.sh.  for *that*,
 needed something from Qt designer, which required installing a bunch
@@ -172,7 +183,7 @@ from http://effbot.org/zone/python-with-statement.htm
       def __init__(self, ankipath):
           self.ankipath = ankipath;
       def __enter__(self):
-          self.col = Collection(ankipath);
+          self.col = Collection(self.ankipath);
           return self;
       def __exit__(self, type, value, traceback):
           if self.col is not None:
@@ -196,23 +207,64 @@ from http://effbot.org/zone/python-with-statement.htm
       for i, val in enumerate(col.decks.allNames()):
           print val
 
-  def pdecksrun():
+  def pdecksrun(ankipath):
       with collection_guard(ankipath) as cg:
           pdecks(cg.col)
 #+END_SRC
 
 
-#+BEGIN_SRC python :var ankipath=anki2 :results output :session ps :noweb yes
+#+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankidecks.py
   <<decks>>
 
-  # the above line intentionally left blank
-  pdecksrun()
+  import sys, os, getopt
+
+  def usage():
+      print "usage: FOO [{-h|--help}] [{-u|--user} username] [{-p|--path} pathname]"
+      sys.exit(2)
+
+  def main():
+      sarglist= 'dhp:u:'
+      larglist = ['help', 'user=', 'path=', 'debug']
+      # lots from https://docs.python.org/2/library/getopt.html
+      try:
+          opts, args = getopt.getopt(sys.argv[1:], sarglist, larglist)
+      except getopt.GetoptError as err:
+          # print help information and exit:
+          print str(err) # will print something like "option -a not recognized"
+          usage()
+          sys.exit(2)
+      path = '~/Documents/Anki' # default
+      user = 'User 1'           # default
+      debug = False
+      for o, a in opts:
+          if o in ['-h', '--help']:
+              usage()
+              # NOTREACHED
+          elif o in ['-u', '--user']:
+              user = a
+          elif o in ['p', '--path']:
+              path=a
+          elif o in ['d', '--debug']:
+              debug = True
+          else:
+              print "unhandled option"
+              usage()
+
+      # the above line intentionally left blank
+      unexpandedpath = ''.join([path, '/', user, '/', 'collection.anki2'])
+      ankipath = os.path.expanduser(os.path.expandvars(unexpandedpath))
+      if debug:
+          print ankipath
+      pdecksrun(ankipath)
+
+  if __name__ == "__main__":
+      main()
 #+END_SRC
 
 #+RESULTS:
 
 #+name: notes
-#+BEGIN_SRC python :session ps :results silent
+#+BEGIN_SRC python :session ps :results silent :noweb yes
   from anki import Collection
 
   <<collection_guard>>
@@ -238,6 +290,8 @@ from http://effbot.org/zone/python-with-statement.htm
   pnotesrun(ankipath, deckname);
 #+END_SRC
 
+#+RESULTS:
+
 
 #+name: tags
 #+BEGIN_SRC python :results output :var anki=anki2 deckname=deckname :session ps
@@ -250,7 +304,7 @@ from http://effbot.org/zone/python-with-statement.htm
 
 
 #+name: recipe577058
-#+BEGIN_SRC python
+#+BEGIN_SRC python :session ps :results silent
   # from http://code.activestate.com/recipes/577058/
 
   def query_yes_no(question, default="yes"):
@@ -259,8 +313,8 @@ from http://effbot.org/zone/python-with-statement.htm
 
       "question" is a string that is presented to the user.
       "default" is the presumed answer if the user just hits <Enter>.
-          It must be "yes" (the default), "no" or None (meaning
-          an answer is required of the user).
+      It must be "yes" (the default), "no" or None (meaning
+      an answer is required of the user).
 
       The "answer" return value is one of "yes" or "no".
       """
@@ -274,7 +328,7 @@ from http://effbot.org/zone/python-with-statement.htm
           prompt = " [y/N] "
       else:
           raise ValueError("invalid default answer: '%s'" % default)
-
+      # for some reason, a blank line here generates an error
       while 1:
           sys.stdout.write(question + prompt)
           choice = raw_input().lower()
@@ -287,11 +341,8 @@ from http://effbot.org/zone/python-with-statement.htm
                                "(or 'y' or 'n').\n")
 #+END_SRC
 
-#+RESULTS: recipe577058
-: None
-
 #+name: user_interface
-#+BEGIN_SRC python :noweb yes :tangle tangle
+#+BEGIN_SRC python :noweb yes
   <<recipe577058>>
 
   # two functions: one that shows the mapping, allows one to proceed or
@@ -395,49 +446,5 @@ from http://effbot.org/zone/python-with-statement.htm
 
 #+RESULTS:
 #+begin_example
-
->>> >>> ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... >>> ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... >>>   File "<stdin>", line 1
-    while 1:
-    ^
-IndentationError: unexpected indent
-File "<stdin>", line 1
-    sys.stdout.write(question + prompt)
-    ^
-IndentationError: unexpected indent
-File "<stdin>", line 1
-    choice = raw_input().lower()
-    ^
-IndentationError: unexpected indent
-File "<stdin>", line 1
-    if default is not None and choice == '':
-    ^
-IndentationError: unexpected indent
-File "<stdin>", line 1
-    return default
-    ^
-IndentationError: unexpected indent
-File "<stdin>", line 1
-    elif choice in valid.keys():
-    ^
-IndentationError: unexpected indent
-File "<stdin>", line 1
-    return valid[choice]
-    ^
-IndentationError: unexpected indent
-File "<stdin>", line 1
-    else:
-    ^
-IndentationError: unexpected indent
-File "<stdin>", line 1
-    sys.stdout.write("Please respond with 'yes' or 'no' "\
-    ^
-IndentationError: unexpected indent
-File "<stdin>", line 1
-    "(or 'y' or 'n').\n")
-    ^
-IndentationError: unexpected indent
->>> ... ... ... >>> ... ... ... ... ... ... ... ... ... ... ... ... ... >>> >>> >>> >>> >>> ... ... >>> ... ... ... ... ... ... >>> ... ... ... >>> ... ... ... ... ... ... ... ... ... >>> ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... >>> >>> ... Field 1 of file is:mapped to Front
-Field 2 of file is:mapped to Back
-Field 3 of file is:mapped to Tags
 #+end_example
 
