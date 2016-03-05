@@ -47,18 +47,6 @@ one function: print the names of the existing decks.
 
 one function: remove a given tag from a given (all?) deck(s?).
 
-*** ankidecks [--user username] [--path pathname]
-
-list the decks in the collection.  the optional argument /username/
-argument specifies the "username" of the Anki collection.
-
-the optional /pathname/ (typically something like ~/Documents/Anki/)
-is the pathname where Anki collections are stored.
-
-*** ankinotes [--user username] [--path pathname] {-d|--deck} deckname
-
-list out the notes from a given deck (the name of which is required).
-
 
 ** X11 anki
 
@@ -176,6 +164,8 @@ is "nil" (in the case where the cache entry is valid).
 
 *** code
 
+**** collection_guard
+
 this allows us to open an Anki collection and ensure that the
 collection is closed "no matter what" happens.  (this does *not*
 include some extraordinary event, such as a core dump.)  this comes
@@ -200,6 +190,15 @@ from http://effbot.org/zone/python-with-statement.htm
       def close(self):
           self.__exit__(None, None, None)
 #+END_SRC
+
+**** ankidecks [--user username] [--path pathname]
+
+list the decks in the collection.  the optional argument /username/
+argument specifies the "username" of the Anki collection.
+
+the optional /pathname/ (typically something like ~/Documents/Anki/)
+is the pathname where Anki collections are stored.
+
 
 #+name: decks
 #+BEGIN_SRC python :results silent :noweb yes
@@ -266,9 +265,10 @@ from http://effbot.org/zone/python-with-statement.htm
       main()
 #+END_SRC
 
-#+RESULTS:
-#+begin_example
-#+end_example
+**** ankinotes [--user username] [--path pathname] {-d|--deck} deckname
+
+list out the notes from a given deck (the name of which is required).
+
 
 #+name: notes
 #+BEGIN_SRC python :results silent :noweb yes
