@@ -237,6 +237,10 @@ is the pathname where Anki collections are stored.
           print str(err) # will print something like "option -a not recognized"
           usage()
           sys.exit(2)
+      if args:
+          print "extra arguments on command line"
+          usage()
+          # NOTREACHED
       path = '~/Documents/Anki' # default
       user = 'User 1'           # default
       verbose = False
@@ -270,11 +274,28 @@ is the pathname where Anki collections are stored.
 list out the notes from a given deck (the name of which is required).
 
 
+the following html unescape() function is from [[http://stackoverflow.com/a/7088472][this post]] on
+stackoverflow.
+
+#+name: unescape
+#+BEGIN_SRC python :results silent
+  try:
+      from html import unescape  # python 3.4+
+  except ImportError:
+      try:
+          from html.parser import HTMLParser  # python 3.x (<3.4)
+      except ImportError:
+          from HTMLParser import HTMLParser  # python 2.x
+      unescape = HTMLParser().unescape
+#+END_SRC
+
+
 #+name: notes
 #+BEGIN_SRC python :results silent :noweb yes
   from anki import Collection
 
   <<collection_guard>>
+  
 
   def pnotes(col, deckname):
       ids = col.findNotes("deck:%s" % deckname)
@@ -283,14 +304,12 @@ list out the notes from a given deck (the name of which is required).
       for i, id in enumerate(ids):
           note = col.getNote(id)
           values = note.values();
-          print "%s\t%s" % (values[0], values[1])
+          print unescape("%s\t%s" % (values[0], values[1]))
 
   def pnotesrun(ankipath, deckname):
       with collection_guard(ankipath) as cg:
           pnotes(cg.col, deckname)
 #+END_SRC
-
-#+RESULTS: notes
 
 #+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankinotes.py
   <<notes>>
@@ -311,6 +330,10 @@ list out the notes from a given deck (the name of which is required).
       except getopt.GetoptError as err:
           # print help information and exit:
           print str(err) # will print something like "option -a not recognized"
+          usage()
+          # NOTREACHED
+      if args:
+          print "extra arguments on command line"
           usage()
           # NOTREACHED
       path = '~/Documents/Anki' # default
@@ -344,8 +367,7 @@ list out the notes from a given deck (the name of which is required).
       main()
 #+END_SRC
 
-#+RESULTS:
-
+**** ankitags
 
 #+name: tags
 #+BEGIN_SRC python :results output :var anki=anki2 deckname=deckname :session ps
@@ -355,6 +377,10 @@ list out the notes from a given deck (the name of which is required).
 #+END_SRC
 
 #+RESULTS: tags
+
+**** ankisearch
+
+**** ankiimport
 
 
 #+name: recipe577058
