@@ -1,5 +1,4 @@
 * ONETAG: (anki menu item)
-
 ** what we want to do
 
 it turns out that Anki opens files in a way that won't allow a
@@ -46,7 +45,6 @@ print out the resulting cards.
 one function: print the names of the existing decks.
 
 one function: remove a given tag from a given (all?) deck(s?).
-
 
 ** X11 anki
 
@@ -204,23 +202,19 @@ is the pathname where Anki collections are stored.
 #+BEGIN_SRC python :results silent :noweb yes
   from anki import Collection
 
-  <<collection_guard>>
-
   def pdecks(col):
       for i, val in enumerate(col.decks.allNames()):
           print val
-
-  def pdecksrun(ankipath):
-      with collection_guard(ankipath) as cg:
-          pdecks(cg.col)
 #+END_SRC
 
 
 #+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankidecks.py
-  <<decks>>
-
   import sys, os
   import argparse
+
+  <<collection_guard>>
+
+  <<decks>>
 
   def main():
       global verbosity
@@ -243,7 +237,9 @@ is the pathname where Anki collections are stored.
       ankipath = os.path.expanduser(os.path.expandvars(unexpandedpath))
       if verbosity:
           print ankipath
-      pdecksrun(ankipath)
+
+      with collection_guard(ankipath) as cg:
+          pdecks(cg.col)
 
   if __name__ == "__main__":
       main()
@@ -274,7 +270,6 @@ stackoverflow.
 #+BEGIN_SRC python :results silent :noweb yes
   from anki import Collection
 
-  <<collection_guard>>
   <<unescape>>
   
 
@@ -286,18 +281,15 @@ stackoverflow.
           note = col.getNote(id)
           values = note.values();
           print unescape("%s\t%s" % (values[0], values[1]))
-
-  def pnotesrun(ankipath, deckname):
-      with collection_guard(ankipath) as cg:
-          pnotes(cg.col, deckname)
 #+END_SRC
 
 #+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankinotes.py
-  <<notes>>
-
   import sys
   import os
   import argparse
+
+  <<collection_guard>>
+  <<notes>>
 
   def main():
       global verbosity
@@ -323,7 +315,9 @@ stackoverflow.
       ankipath = os.path.expanduser(os.path.expandvars(unexpandedpath))
       if verbosity:
           print ankipath, args.deckname
-      pnotesrun(ankipath, args.deckname);
+
+      with collection_guard(ankipath) as cg:
+          pnotes(cg.col, args.deckname)
 
   if __name__ == "__main__":
       main()
@@ -337,8 +331,6 @@ notes with each tag.
 #+name: tags
 #+BEGIN_SRC python :results silent :noweb yes
   from anki import Collection
-
-  <<collection_guard>>
 
   def ptags(col, deckname):
       ids = col.findNotes("deck:%s" % deckname)
@@ -358,17 +350,14 @@ notes with each tag.
                   tags[s] += 1
       for t in iter(tags):
           print t, tags[t]
-
-  def ptagsrun(ankipath, deckname):
-      with collection_guard(ankipath) as cg:
-          ptags(cg.col, deckname)
 #+END_SRC
 
 #+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankitags.py
-  <<tags>>
-
   import os
   import argparse
+
+  <<collection_guard>>
+  <<tags>>
 
   def main(argv):
       global verbosity
@@ -394,7 +383,9 @@ notes with each tag.
       ankipath = os.path.expanduser(os.path.expandvars(unexpandedpath))
       if verbosity:
           print ankipath, args.deckname
-      ptagsrun(ankipath, args.deckname);
+
+      with collection_guard(ankipath) as cg:
+          ptags(cg.col, args.deckname)
 
   if __name__ == "__main__":
       import sys
