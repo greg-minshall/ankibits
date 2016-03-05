@@ -219,49 +219,29 @@ is the pathname where Anki collections are stored.
 #+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankidecks.py
   <<decks>>
 
-  import sys, os, getopt
-
-  def usage():
-      print "usage: FOO [{-h|--help}] [{-u|--user} username] [{-p|--path} pathname]"
-      sys.exit(2)
+  import sys, os
+  import argparse
 
   def main():
-      global verbose
-      sarglist= 'hp:u:v'
-      larglist = ['help', 'path=', 'user=', 'verbose']
-      # lots from https://docs.python.org/2/library/getopt.html
-      try:
-          opts, args = getopt.getopt(sys.argv[1:], sarglist, larglist)
-      except getopt.GetoptError as err:
-          # print help information and exit:
-          print str(err) # will print something like "option -a not recognized"
-          usage()
-          sys.exit(2)
-      if args:
-          print "extra arguments on command line"
-          usage()
-          # NOTREACHED
-      path = '~/Documents/Anki' # default
-      user = 'User 1'           # default
-      verbose = False
-      for o, a in opts:
-          if o in ['-h', '--help']:
-              usage()
-              # NOTREACHED
-          elif o in ['-u', '--user']:
-              user = a
-          elif o in ['p', '--path']:
-              path=a
-          elif o in ["v", "--verbose"]:
-              verbose = True
-          else:
-              print "unhandled option"
-              usage()
+      global verbosity
+      parser = argparse.ArgumentParser(description=
+                                       "list the decks in an Anki collection")
+      parser.add_argument("-p", "--path", action="store",
+                          default="~/Documents/Anki", metavar="pathname",
+                          help="pathname to directory holding Anki collections")
+      parser.add_argument("-u", "--user", action="store",
+                          default="User 1", metavar="username",
+                          help="Anki username of collection")
+      parser.add_argument("-v", "--verbosity", action="count",
+                          default=0,
+                          help="increase level of (debugging) verbosity")
+      args = parser.parse_args()
+      verbosity = args.verbosity
 
       # the above line intentionally left blank
-      unexpandedpath = ''.join([path, '/', user, '/', 'collection.anki2'])
+      unexpandedpath = ''.join([args.path, '/', args.user, '/', 'collection.anki2'])
       ankipath = os.path.expanduser(os.path.expandvars(unexpandedpath))
-      if verbose:
+      if verbosity:
           print ankipath
       pdecksrun(ankipath)
 
