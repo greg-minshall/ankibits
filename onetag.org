@@ -331,14 +331,76 @@ stackoverflow.
 
 **** ankitags
 
+list the tags that exist in a given deck, along with the number of
+notes with each tag.
+
 #+name: tags
-#+BEGIN_SRC python :results output :var anki=anki2 deckname=deckname :session ps
+#+BEGIN_SRC python :results silent :noweb yes
   from anki import Collection
-  with collection_guard(ankipath) as cg:
-      ids = cg.col.findCards("deck:%s" % deckname)
+
+  <<collection_guard>>
+
+  def ptags(col, deckname):
+      ids = col.findNotes("deck:%s" % deckname)
+      if verbosity:
+          print ids;
+      tags = dict()
+      for i, id in enumerate(ids):
+          note = col.getNote(id)
+          if verbosity:
+              print note.stringTags()
+          for s in note.stringTags().split():
+              if verbosity:
+                  print s
+              if s not in tags:
+                  tags[s] = 1
+              else:
+                  tags[s] += 1
+      for t in iter(tags):
+          print t
+
+  def ptagsrun(ankipath, deckname):
+      with collection_guard(ankipath) as cg:
+          ptags(cg.col, deckname)
 #+END_SRC
 
-#+RESULTS: tags
+#+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankitags.py
+  <<tags>>
+
+  import os
+  import argparse
+
+  def main(argv):
+      global verbosity
+      parser = argparse.ArgumentParser(description=
+                                  "list the notes in one deck in an Anki collection")
+      parser.add_argument("-d", "-deck", action="store", dest='deckname',
+                          default='Default',
+                          help="name of deck in Anki user's collection")
+      parser.add_argument("-p", "--path", action="store",
+                          default="~/Documents/Anki", metavar="pathname",
+                          help="pathname to directory holding Anki collections")
+      parser.add_argument("-u", "--user", action="store",
+                          default="User 1", metavar="username",
+                          help="Anki username of collection")
+      parser.add_argument("-v", "--verbosity", action="count",
+                          default=0,
+                          help="increase level of (debugging) verbosity")
+      args = parser.parse_args(argv)
+      verbosity = args.verbosity
+
+      # the above line intentionally left blank
+      unexpandedpath = ''.join([args.path, '/', args.user, '/', 'collection.anki2'])
+      ankipath = os.path.expanduser(os.path.expandvars(unexpandedpath))
+      if verbosity:
+          print ankipath, args.deckname
+      ptagsrun(ankipath, args.deckname);
+
+  if __name__ == "__main__":
+      import sys
+      main(sys.argv[1:])
+#+END_SRC
+
 
 **** ankisearch
 
