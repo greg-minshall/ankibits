@@ -275,11 +275,12 @@ stackoverflow.
   from anki import Collection
 
   <<collection_guard>>
+  <<unescape>>
   
 
   def pnotes(col, deckname):
       ids = col.findNotes("deck:%s" % deckname)
-      if verbose:
+      if verbosity:
           print ids;
       for i, id in enumerate(ids):
           note = col.getNote(id)
@@ -294,54 +295,35 @@ stackoverflow.
 #+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankinotes.py
   <<notes>>
 
-  import sys, os, getopt
-
-  def usage():
-      print "usage: FOO [{-h|--help}] [{-u|--user} username] [{-p|--path} pathname] [{-d|--deck} deckname]"
-      sys.exit(2)
+  import sys
+  import os
+  import argparse
 
   def main():
-      global verbose
-      sarglist= 'd:hp:u:v'
-      larglist = ['deck=', 'help', 'path=', 'user=', 'verbose']
-      # from example code at https://docs.python.org/2/library/getopt.html
-      try:
-          opts, args = getopt.getopt(sys.argv[1:], sarglist, larglist)
-      except getopt.GetoptError as err:
-          # print help information and exit:
-          print str(err) # will print something like "option -a not recognized"
-          usage()
-          # NOTREACHED
-      if args:
-          print "extra arguments on command line"
-          usage()
-          # NOTREACHED
-      path = '~/Documents/Anki' # default
-      user = 'User 1'           # default
-      verbose = False
-      deckname = 'Default'
-      for o, a in opts:
-          if o in ['-d', '--deck']:
-              deckname = a
-          elif o in ['-h', '--help']:
-              usage()
-              # NOTREACHED
-          elif o in ['-u', '--user']:
-              user = a
-          elif o in ['p', '--path']:
-              path=a
-          elif o in ['v', '--verbose']:
-              verbose = True
-          else:
-              print "unhandled option"
-              usage()
+      global verbosity
+      parser = argparse.ArgumentParser(description=
+                                  "list the notes in one deck in an Anki collection")
+      parser.add_argument("-d", "-deck", action="store", dest='deckname',
+                          default='Default',
+                          help="name of deck in Anki user's collection")
+      parser.add_argument("-p", "--path", action="store",
+                          default="~/Documents/Anki", metavar="pathname",
+                          help="pathname to directory holding Anki collections")
+      parser.add_argument("-u", "--user", action="store",
+                          default="User 1", metavar="username",
+                          help="Anki username of collection")
+      parser.add_argument("-v", "--verbosity", action="count",
+                          default=0,
+                          help="increase level of (debugging) verbosity")
+      args = parser.parse_args()
+      verbosity = args.verbosity
 
       # the above line intentionally left blank
-      unexpandedpath = ''.join([path, '/', user, '/', 'collection.anki2'])
+      unexpandedpath = ''.join([args.path, '/', args.user, '/', 'collection.anki2'])
       ankipath = os.path.expanduser(os.path.expandvars(unexpandedpath))
-      if verbose:
-          print ankipath, deckname
-      pnotesrun(ankipath, deckname);
+      if verbosity:
+          print ankipath, args.deckname
+      pnotesrun(ankipath, args.deckname);
 
   if __name__ == "__main__":
       main()
