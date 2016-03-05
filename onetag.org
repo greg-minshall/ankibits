@@ -118,19 +118,50 @@ deck['mod'] = m['mod']
   (assuming we figure *that* out! :)
 
 ** some code
-#+name: anki2
+
+i'm not sure how to get scalar parameters into variables.  the
+following works, but is maybe not ideal.  first, declare a bunch of
+variables in a table:
+#+name: parameters
 | /Users/minshall/Documents/Anki/test/collection.anki2 |
-#+name: deck
-| decktest |
+| decktest                                             |
+| /Users/minshall/src/mine/ankiplugins/test.html       |
+
+then, for each parameter, define a function that outputs that function
+
+#+name: anki2
+#+BEGIN_SRC python :var a=parameters[0,0] :results results raw :session ss
+a
+#+END_SRC
+
+#+RESULTS: anki2
+/Users/minshall/Documents/Anki/test/collection.anki2
+
+#+name: deckname
+#+BEGIN_SRC python :var a=parameters[1,0] :results results raw :session ss
+a
+#+END_SRC
+
+#+RESULTS: deckname
+decktest
+
 #+name: imfile
-| /Users/minshall/src/mine/ankiplugins/test.html |
+#+BEGIN_SRC python :var a=parameters[2,0] :results results raw :session ss
+a
+#+END_SRC
 
+#+RESULTS: imfile
+/Users/minshall/src/mine/ankiplugins/test.html
 
-#+BEGIN_SRC python :var a=deck[0,0] :results results raw :session ss
+#+name: testing
+testing123
+
+#+BEGIN_SRC python :var a=testing :session ss :results results raw
+a
 #+END_SRC
 
 #+RESULTS:
-testdeck
+testing123
 
 this allows us to open an Anki collection and ensure that the
 collection is closed "no matter what" happens.  (this does *not*
