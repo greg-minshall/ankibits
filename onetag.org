@@ -249,7 +249,7 @@ is the pathname where Anki collections are stored.
       main()
 #+END_SRC
 
-**** ankinotes [--user username] [--path pathname] {-d|--deck} deckname
+**** ankinotes [--user username] [--path pathname] [{-d|--deck} deckname]
 
 list out the notes from a given deck (the name of which is required).
 
@@ -329,7 +329,7 @@ stackoverflow.
       main()
 #+END_SRC
 
-**** ankitags
+**** ankitags [{-u|--user} username] [{-p|--path} pathname] [{-d|--deck} deckname]
 
 list the tags that exist in a given deck, along with the number of
 notes with each tag.
@@ -357,7 +357,7 @@ notes with each tag.
               else:
                   tags[s] += 1
       for t in iter(tags):
-          print t
+          print t, tags[t]
 
   def ptagsrun(ankipath, deckname):
       with collection_guard(ankipath) as cg:
@@ -402,7 +402,85 @@ notes with each tag.
 #+END_SRC
 
 
-**** ankisearch
+**** ankisearch [{-p|--path} pathname] [{-u|--user} username] [{-d|--deck} deckname] query
+
+search a given deck
+#+name: search
+#+BEGIN_SRC python :results silent :noweb yes
+  from anki import Collection
+
+  <<collection_guard>>
+
+  def ptags(col, deckname):
+      ids = col.findNotes("deck:%s" % deckname)
+      if verbosity:
+          print ids;
+      tags = dict()
+      for i, id in enumerate(ids):
+          note = col.getNote(id)
+          if verbosity:
+              print note.stringTags()
+          for s in note.stringTags().split():
+              if verbosity:
+                  print s
+              if s not in tags:
+                  tags[s] = 1
+              else:
+                  tags[s] += 1
+      for t in iter(tags):
+          print t, tags[t]
+
+  def ptagsrun(ankipath, deckname):
+      with collection_guard(ankipath) as cg:
+          ptags(cg.col, deckname)
+#+END_SRC
+
+#+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankisearch.py
+  <<search>>
+
+  import argparse
+  import os
+  import sys
+
+  def main(argv):
+      global verbosity
+      parser = argparse.ArgumentParser(description=
+                                  "list the notes in one deck in an Anki collection")
+      parser.add_argument("-d", "-deck", action="store", dest='deckname',
+                          default='Default',
+                          help="name of deck in Anki user's collection")
+      parser.add_argument("-p", "--path", action="store",
+                          default="~/Documents/Anki", metavar="pathname",
+                          help="pathname to directory holding Anki collections")
+      parser.add_argument("-u", "--user", action="store",
+                          default="User 1", metavar="username",
+                          help="Anki username of collection")
+      parser.add_argument("-v", "--verbosity", action="count",
+                          default=0,
+                          help="increase level of (debugging) verbosity")
+      parser.add_argument("query", nargs=argparse.REMAINDER, action="store",
+                          metavar="query",
+                          help="query terms for search [e.g., 'tag:foo aspirin']")
+      args = parser.parse_args(argv)
+      verbosity = args.verbosity
+      if ('query' not in args) | (not args.query):
+          print "required 'query' term missing"
+          parser.print_help()
+          sys.exit();
+      if verbosity > 1:
+          print args
+
+      # the above line intentionally left blank
+      unexpandedpath = ''.join([args.path, '/', args.user, '/', 'collection.anki2'])
+      ankipath = os.path.expanduser(os.path.expandvars(unexpandedpath))
+      if verbosity:
+          print ankipath, args.deckname
+      psearchrun(ankipath, args.deckname);
+
+  if __name__ == "__main__":
+      import sys
+      main(sys.argv[1:])
+#+END_SRC
 
 **** ankiimport
 
