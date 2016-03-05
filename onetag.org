@@ -83,7 +83,7 @@ deck['mod'] = m['mod']
   (rather than to the one i looked up using col.decks.id), or (it
   appears) whichever deck was most recently "selected".  here's (more
   or less) DAE's example:
-#+BEGIN_SRC python :var TEXT_FILE_PATH="/Users/minshall/src/mine/ankiplugins/test.html" :var COLLECTION_FILE_PATH="/Users/minshall/Documents/Anki/test/collection.anki2" :var DECK_NAME="testdeck"
+#+BEGIN_SRC python :session ps :var TEXT_FILE_PATH="/Users/minshall/src/mine/ankiplugins/test.html" :var COLLECTION_FILE_PATH=anki2 :var DECK_NAME=deckname
   from anki import Collection
   from anki.importing import TextImporter
   file = TEXT_FILE_PATH
@@ -107,7 +107,6 @@ deck['mod'] = m['mod']
 #+END_SRC
 
 #+RESULTS:
-: None
 
   it appears that the fnotes themselves maybe contain information
   about the destination deck.  or, at least, that when importing, one
@@ -119,49 +118,48 @@ deck['mod'] = m['mod']
 
 ** some code
 
+*** parameters
+
 i'm not sure how to get scalar parameters into variables.  the
-following works, but is maybe not ideal.  first, declare a bunch of
-variables in a table:
+following works, but is maybe not ideal.
+
 #+name: parameters
 | /Users/minshall/Documents/Anki/test/collection.anki2 |
 | decktest                                             |
 | /Users/minshall/src/mine/ankiplugins/test.html       |
 
-then, for each parameter, define a function that outputs that function
-
 #+name: anki2
-#+BEGIN_SRC python :var a=parameters[0,0] :results results raw :session ss
+#+BEGIN_SRC python :var a=parameters[0,0] :results results raw :session ps
 a
 #+END_SRC
 
-#+RESULTS: anki2
+#+RESULTS[90f772dc0313b916f2f89b493f51aef5d5351cf8]: anki2
 /Users/minshall/Documents/Anki/test/collection.anki2
 
 #+name: deckname
-#+BEGIN_SRC python :var a=parameters[1,0] :results results raw :session ss
+#+BEGIN_SRC python :var a=parameters[1,0] :results results raw :session ps
 a
 #+END_SRC
 
-#+RESULTS: deckname
+#+RESULTS[fe3bb60a68b6853fa7d7b2e7bb50abe431ff3935]: deckname
 decktest
 
 #+name: imfile
-#+BEGIN_SRC python :var a=parameters[2,0] :results results raw :session ss
+#+BEGIN_SRC python :var a=parameters[2,0] :results results raw :session ps
 a
 #+END_SRC
 
-#+RESULTS: imfile
+#+RESULTS[fc56904fc33ce7b967cb09b25e451de24614ee04]: imfile
 /Users/minshall/src/mine/ankiplugins/test.html
 
-#+name: testing
-testing123
+one might want to say "#+name: foo\nbar\n", but then ":var a=foo"
+produces a value in a of "bar\n", i.e., with a trailing newline.
 
-#+BEGIN_SRC python :var a=testing :session ss :results results raw
-a
-#+END_SRC
+also, one might want to say ":cache yes", but *then*, the value passed
+is "nil" (in the case where the cache entry is valid).
 
-#+RESULTS:
-testing123
+
+*** code
 
 this allows us to open an Anki collection and ensure that the
 collection is closed "no matter what" happens.  (this does *not*
@@ -169,7 +167,7 @@ include some extraordinary event, such as a core dump.)  this comes
 from http://effbot.org/zone/python-with-statement.htm
 
 #+name: collection_guard
-#+BEGIN_SRC python
+#+BEGIN_SRC python :session ps :results silent
   class collection_guard:
       def __init__(self, ankipath):
           self.ankipath = ankipath;
@@ -188,12 +186,11 @@ from http://effbot.org/zone/python-with-statement.htm
           self.__exit__(None, None, None)
 #+END_SRC
 
-#+RESULTS: collection_guard
-: None
-
 #+name: decks
-#+BEGIN_SRC python
+#+BEGIN_SRC python :session ps :results silent :noweb yes
   from anki import Collection
+
+  <<collection_guard>>
 
   def pdecks(col):
       for i, val in enumerate(col.decks.allNames()):
@@ -204,25 +201,21 @@ from http://effbot.org/zone/python-with-statement.htm
           pdecks(cg.col)
 #+END_SRC
 
-#+BEGIN_SRC python :var ankipath=anki2[0,0] :results output :session ss :noweb yes
-    <<decks>>
 
-    pdecksrun()
+#+BEGIN_SRC python :var ankipath=anki2 :results output :session ps :noweb yes
+  <<decks>>
+
+  # the above line intentionally left blank
+  pdecksrun()
 #+END_SRC
 
 #+RESULTS:
-: 
-: >>> >>> ... ... ... >>> ... ... ...   File "<stdin>", line 4
-:     pdecksrun()
-:             ^
-: SyntaxError: invalid syntax
-
-#+RESULTS: decks
-
 
 #+name: notes
-#+BEGIN_SRC python
+#+BEGIN_SRC python :session ps :results silent
   from anki import Collection
+
+  <<collection_guard>>
 
   def pnotes(col, deckname):
       ids = col.findNotes("deck:%s" % deckname)
@@ -237,7 +230,9 @@ from http://effbot.org/zone/python-with-statement.htm
           pnotes(cg.col, deckname)
 #+END_SRC
 
-#+BEGIN_SRC python :results output :var ankipath=anki2[0,0] deckname=deck[0,0] :session ss :noweb yes
+#+RESULTS: notes
+
+#+BEGIN_SRC python :results output :var ankipath=anki2 deckname=deckname :session ps :noweb yes
   <<notes>>
 
   pnotesrun(ankipath, deckname);
@@ -245,7 +240,7 @@ from http://effbot.org/zone/python-with-statement.htm
 
 
 #+name: tags
-#+BEGIN_SRC python :results output :var anki=anki2[0,0] deckname=deck[0,0] :session ss
+#+BEGIN_SRC python :results output :var anki=anki2 deckname=deckname :session ps
   from anki import Collection
   with collection_guard(ankipath) as cg:
       ids = cg.col.findCards("deck:%s" % deckname)
@@ -390,7 +385,7 @@ from http://effbot.org/zone/python-with-statement.htm
 #+RESULTS: import
 : None
 
-#+BEGIN_SRC python :session ss :results output :var ankipath=anki2[0,0] :var deckname=deck[0,0] :var imfile=imfile[0,0] :noweb yes
+#+BEGIN_SRC python :session ps :results output :var ankipath=anki2 :var deckname=deckname :var imfile=imfile :noweb yes
   <<import>>
 
   import pdb
