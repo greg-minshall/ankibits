@@ -275,6 +275,17 @@ stackoverflow.
       return parser
 #+END_SRC
 
+#+name: consankipath
+#+BEGIN_SRC python :results silent
+  def consankipath(path, user):
+      unexpandedpath = ''.join([path, '/', user, '/', 'collection.anki2'])
+      # https://docs.python.org/2/library/os.path.html#os.path.expanduser
+      ankipath = os.path.expanduser(os.path.expandvars(unexpandedpath))
+      if verbosity:
+          print ankipath
+      return ankipath
+#+END_SRC
+
 *** ankidecks [--user username] [--path pathname]
 
 list the decks in the collection.  the optional argument /username/
@@ -299,32 +310,19 @@ is the pathname where Anki collections are stored.
   import argparse
 
   <<collection_guard>>
-
   <<decks>>
+  <<myargs>>
+  <<consankipath>>
 
   def main():
       # scope rules (LEGB): http://stackoverflow.com/a/292502
       global verbosity
       parser = argparse.ArgumentParser(description=
-                                       "list the decks in an Anki collection")
-      parser.add_argument("-p", "--path", action="store",
-                          default="~/Documents/Anki", metavar="pathname",
-                          help="pathname to directory holding Anki collections")
-      parser.add_argument("-u", "--user", action="store",
-                          default="User 1", metavar="username",
-                          help="Anki username of collection")
-      parser.add_argument("-v", "--verbosity", action="count",
-                          default=0,
-                          help="increase level of (debugging) verbosity")
+                                       "list the decks in an Anki collection",
+                                       parents=[myargs()])
       args = parser.parse_args()
       verbosity = args.verbosity
-
-      # the above line intentionally left blank
-      unexpandedpath = ''.join([args.path, '/', args.user, '/', 'collection.anki2'])
-      # https://docs.python.org/2/library/os.path.html#os.path.expanduser
-      ankipath = os.path.expanduser(os.path.expandvars(unexpandedpath))
-      if verbosity:
-          print ankipath
+      ankipath = consankipath(args.path, args.user)
 
       with collection_guard(ankipath) as cg:
           pdecks(cg.col)
