@@ -552,9 +552,25 @@ search a given deck
   <<user_interface>>
 
   def constag(deckname):
+      # https://docs.python.org/2/library/time.html
       import time
       secs = int(time.time())
-      return "deck%s-%s" % (deckname, secs)
+      tag = "deck-%s-%s" % (deckname, secs)
+      if verbosity:
+          print "tag %s" % tag
+      return tag
+
+  def removetag(col, tag):
+      """remove all instances of a given tag from an Anki collection"""
+      ids = []
+      ids = col.findNotes("tag:%s" % tag)
+      print ids
+      for i, id in enumerate(ids):
+          note = col.getNote(id)
+          print "%s %s//%s" % (id, note, note.tags)
+          note.delTag(tag)
+          note.flush()
+          print "%s %s//%s" % (id, note, note.tags)
 
   # get foreign notes: these aren't (yet) real Anki notes, just a
   # represenation that has been read in.
@@ -577,7 +593,7 @@ search a given deck
       col.decks.select(did)
       ti.importNotes(fnotes)
 
-  def doimport(col, deckname, ifilepath):
+  def doimport(col, deckname, ifilepath, subset, superset):
       tag = constag(deckname)     # just run once!
       ti = TextImporter(col, ifilepath)
       ti.initMapping();
@@ -593,15 +609,16 @@ search a given deck
                   print txt
           imported = ti._ids      # cards that were imported
           del ti;                 # no longer to be used
-          if args.superset:
-              # now, move any notes from any *other* cards with this tag to this deck
-              did = col.decks.id(deckname)
-              col.decks.setDeck(imported, did)
-          if args.subset:
-              # now, delete any notes in deck that do *not* have this tag
+          if superset:
+              # now, move any notes from any *other* decks with this tag to this deck
               xxx()
+          if subset:
+              # now, delete any notes in deck that do *not* have this tag
+              yyy()
+          did = col.decks.id(deckname)
+          col.decks.setDeck(imported, did)
           # now, delete this tag from these cards (no other cards should have this tag)
-          yyy()
+          removetag(col, tag)
           # done!
 
   # http://ankisrs.net/docs/addons.html#the-database
@@ -619,7 +636,8 @@ search a given deck
 
       ifilepath = abspath(args.inputfile)
       with collection_guard(ankipath) as cg:
-          doimport(cg.col, args.deckname, ifilepath)
+          doimport(cg.col, args.deckname, ifilepath,
+                   subset=args.subset, superset=args.superset)
           cg.commit()
 
   if __name__ == "__main__":
