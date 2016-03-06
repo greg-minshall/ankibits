@@ -254,9 +254,13 @@ stackoverflow.
 #+BEGIN_SRC python :results silent :noweb yes
   import argparse
 
+  <<collection_guard>>
   <<consankipath>>
 
-  def myparse(parser, argv=None):
+  def myparse(parser, argv=None, deckmustexist=True):
+      """parse the arguments; set up ankipath and, optionally, check if deck exists"""
+      import argparse
+
       global verbosity
 
       args = parser.parse_args(argv)
@@ -268,6 +272,13 @@ stackoverflow.
       ankipath = consankipath(args.path, args.user)
       if verbosity:
           print ankipath
+
+      if ('deckname' in dir(args)) & deckmustexist:
+          with collection_guard(ankipath) as cg:
+              if cg.col.decks.byName(args.deckname) == None:
+                  import sys
+                  print "error: deckname %s does not exist" % args.deckname
+                  sys.exit(3)
 
       return [args, ankipath]
 #+END_SRC
@@ -391,7 +402,6 @@ list out the notes from a given deck (the name of which is required).
 
 #+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankinotes.py
   <<collection_guard>>
-  <<consankipath>>
   <<myargsdeck>>
   <<notes>>
 
@@ -442,7 +452,6 @@ notes with each tag.
 
 #+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankitags.py
   <<collection_guard>>
-  <<consankipath>>
   <<myargsdeck>>
   <<tags>>
 
@@ -486,7 +495,6 @@ search a given deck
   import sys
 
   <<collection_guard>>
-  <<consankipath>>
   <<myargsdeck>>
   <<search>>
 
@@ -541,13 +549,13 @@ search a given deck
 
 #+name: import
 #+BEGIN_SRC python :noweb yes :tangle ankiimport.py
+  import argparse
   from anki import Collection
   from anki.importing import TextImporter
   from anki.tags import TagManager
 
   <<abspath>>
   <<collection_guard>>
-  <<consankipath>>
   <<myargsdeck>>
   <<unescape>>
   <<user_interface>>
