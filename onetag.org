@@ -549,6 +549,7 @@ search a given deck
   <<collection_guard>>
   <<consankipath>>
   <<myargsdeck>>
+  <<unescape>>
   <<user_interface>>
 
   def constag(deckname):
@@ -577,15 +578,18 @@ search a given deck
               print "%s %s//%s" % (id, note, note.tags)
 
   def superset(col, deckname, tag):
-      """make sure all notes with tag TAG are in Anki deck DECKNAME"""
-      did = col.decks.byName(deckname)
+      """make sure all cards with tag TAG are in Anki deck DECKNAME"""
+      did = col.decks.byName(deckname)['id']
       ids = []
-      ids = col.findNotes("tag:%s" % tag)
+      ids = col.findCards("tag:%s" % tag)
+      if verbosity:
+          print "superset ids: %s" % ids
       for i, id in enumerate(ids):
-          note = col.getNote(id)
+          note = col.getCard(id)
+          col.decks.setDeck(imported, did)
     
   def subset(col, deckname, tag):
-      """make sure all notes in Anki deck DECKNAME have tag TAG"""
+      """make sure only cards with tag TAG are in Anki deck DECKNAME"""
 
   # get foreign notes: these aren't (yet) real Anki notes, just a
   # represenation that has been read in.
@@ -601,7 +605,9 @@ search a given deck
   def add2col(col, deckname, ti, fnotes):
       # XXX should we remember previously selected deck (and reselect it
       # when we're done here)?
-      did = col.decks.byName(deckname)
+      did = col.decks.byName(deckname)['id']
+      if verbosity:
+          print "did %s" % did
       if did != ti.model['did']:
           ti.model['did'] = did
           col.models.save(ti.model)
@@ -621,17 +627,15 @@ search a given deck
           add2col(col, deckname, ti, fnotes)
           if ti.log:
               for txt in ti.log:
-                  print txt
+                  print unescape(txt)
           imported = ti._ids      # cards that were imported
           del ti;                 # no longer to be used
           if superset:
               # now, move any notes from any *other* decks with this tag to this deck
-              xxx()
+              superset()
           if subset:
               # now, delete any notes in deck that do *not* have this tag
-              yyy()
-          did = col.decks.byName(deckname)
-          col.decks.setDeck(imported, did)
+              subset()
           # now, delete this tag from these cards (no other cards should have this tag)
           removetag(col, tag)
           # done!
