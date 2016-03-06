@@ -455,29 +455,18 @@ search a given deck
 #+END_SRC
 
 #+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankisearch.py
-  import argparse
   import os
   import sys
 
   <<collection_guard>>
+  <<consankipath>>
+  <<myargsdeck>>
   <<search>>
 
   def main(argv):
       global verbosity
-      parser = argparse.ArgumentParser(description=
-                                  "list the notes in one deck in an Anki collection")
-      parser.add_argument("-d", "-deck", action="store", dest='deckname',
-                          default='Default',
-                          help="name of deck in Anki user's collection")
-      parser.add_argument("-p", "--path", action="store",
-                          default="~/Documents/Anki", metavar="pathname",
-                          help="pathname to directory holding Anki collections")
-      parser.add_argument("-u", "--user", action="store",
-                          default="User 1", metavar="username",
-                          help="Anki username of collection")
-      parser.add_argument("-v", "--verbosity", action="count",
-                          default=0,
-                          help="increase level of (debugging) verbosity")
+      parser = argparse.ArgumentParser(parents=[myargsdeck()],
+                      description="search the notes in one deck in an Anki collection")
       parser.add_argument("query", nargs=argparse.REMAINDER, action="store",
                           metavar="query",
                           help="query terms for search [e.g., 'tag:foo aspirin']")
@@ -491,12 +480,11 @@ search a given deck
       if verbosity > 1:
           print args
 
-      # the above line intentionally left blank
-      unexpandedpath = ''.join([args.path, '/', args.user, '/', 'collection.anki2'])
-      ankipath = os.path.expanduser(os.path.expandvars(unexpandedpath))
+      ankipath = consankipath(args.path, args.user)
       if verbosity:
-          print ankipath, args.deckname
+          print args.deckname
           print args.query
+
       with collection_guard(ankipath) as cg:
           psearch(cg.col, args.deckname, " ".join(args.query))
 
