@@ -288,6 +288,14 @@ stackoverflow.
       return ankipath
 #+END_SRC
 
+#+name: abspath
+#+BEGIN_SRC python :results silent
+  def abspath(path):
+      import os
+
+      return os.path.abspath(os.path.expanduser(os.path.expandvars(path)))
+#+END_SRC
+
 *** ankidecks [--user username] [--path pathname]
 
 list the decks in the collection.  the optional argument /username/
@@ -518,6 +526,7 @@ search a given deck
   from anki.importing import TextImporter
   from anki.tags import TagManager
 
+  <<abspath>>
   <<collection_guard>>
   <<consankipath>>
   <<myargsdeck>>
@@ -559,10 +568,11 @@ search a given deck
       verbosity = args.verbosity
 
       ankipath = consankipath(args.path, args.user)
+      ifilepath = abspath(args.inputfile)
       tag = constag(args.deckname); # just run once!
       with collection_guard(ankipath) as cg:
           col = cg.col
-          ti = TextImporter(col, args.inputfile)
+          ti = TextImporter(col, ifilepath)
           ti.initMapping();
           if showMapping(ti):     # allow user to abort
               # first, get anki read in the notes (to an intermediate form)
@@ -589,4 +599,3 @@ search a given deck
       main(sys.argv[1:])
 
 #+END_SRC
-
