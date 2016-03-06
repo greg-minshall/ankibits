@@ -175,15 +175,19 @@ from http://effbot.org/zone/python-with-statement.htm
           self.col = Collection(self.ankipath);
           return self;
       def __exit__(self, type, value, traceback):
+          # the protocol is, do a commit() *before* exiting
+          self.undo();
           if self.col is not None:
               self.col.close();
               self.col = None
           return False
-      def abort(self):            # we're unhappy, so *don't* close
+      def undo(self):            # we're unhappy, so undo() our progress
           if self.col is not None:
-              self.col = None
-      def close(self):
-          self.__exit__(None, None, None)
+              # XXX what's the difference btw col.undo() and .rollback()?
+              self.col.rollback()
+      def commit(self):
+          if self.col is not None:
+              self.col.save()
 #+END_SRC
 
 **** unescape
@@ -233,6 +237,7 @@ stackoverflow.
       # for some reason, a blank line here generates an error
       while 1:
           sys.stdout.write(question + prompt)
+          # handle C-c at this point
           choice = raw_input().lower()
           if default is not None and choice == '':
               return default
@@ -246,10 +251,12 @@ stackoverflow.
 **** myargs, myargsdeck
 
 #+name: myparse
-#+BEGIN_SRC python :results silent
+#+BEGIN_SRC python :results silent :noweb yes
   import argparse
 
-  def myparse(parser, argv):
+  <<consankipath>>
+
+  def myparse(parser, argv=None):
       global verbosity
 
       args = parser.parse_args(argv)
@@ -258,15 +265,18 @@ stackoverflow.
       if verbosity > 1:
           print args
 
-      return args
+      ankipath = consankipath(args.path, args.user)
+      if verbosity:
+          print ankipath
+
+      return [args, ankipath]
 #+END_SRC
 
 
 #+name: myargs
 #+BEGIN_SRC python :results silent :noweb yes
-  import argparse
-
   def myargs():
+      import argparse
       parser = argparse.ArgumentParser(add_help=False)
       parser.add_argument("-p", "--path", action="store",
                           default="~/Documents/Anki", metavar="pathname",
@@ -279,7 +289,8 @@ stackoverflow.
                           help="increase level of (debugging) verbosity")
       return parser
 
-      <<myparse>>                 # for convenience
+  # for convenience
+  <<myparse>>
 #+END_SRC
 
 
@@ -336,10 +347,11 @@ is the pathname where Anki collections are stored.
 
 
 #+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankidecks.py
+  import argparse
+
   <<collection_guard>>
   <<decks>>
   <<myargs>>
-  <<consankipath>>
 
   def main():
       # scope rules (LEGB): http://stackoverflow.com/a/292502
@@ -347,12 +359,11 @@ is the pathname where Anki collections are stored.
       parser = argparse.ArgumentParser(description=
                                        "list the decks in an Anki collection",
                                        parents=[myargs()])
-      args = parser.parse_args()
-      verbosity = args.verbosity
-      ankipath = consankipath(args.path, args.user)
+      args, ankipath = myparse(parser)
 
       with collection_guard(ankipath) as cg:
           pdecks(cg.col)
+          cg.commit()
 
   if __name__ == "__main__":
       main()
@@ -388,13 +399,11 @@ list out the notes from a given deck (the name of which is required).
       global verbosity
       parser = argparse.ArgumentParser(parents=[myargsdeck()],
                   description="list the notes in one deck in an Anki collection")
-      args = parser.parse_args()
-      verbosity = args.verbosity
-
-      ankipath = consankipath(args.path, args.user);
+      args, ankipath = myparse(parser)
 
       with collection_guard(ankipath) as cg:
           pnotes(cg.col, args.deckname)
+          cg.commit()
 
   if __name__ == "__main__":
       main()
@@ -437,21 +446,18 @@ notes with each tag.
   <<myargsdeck>>
   <<tags>>
 
-  def main(argv):
+  def main():
       global verbosity
       parser = argparse.ArgumentParser(parents=[myargsdeck()],
                   description="list the notes in one deck in an Anki collection")
-      args = parser.parse_args(argv)
-      verbosity = args.verbosity
-
-      ankipath = consankipath(args.path, args.user)
+      args, ankipath = myparse(parser)
 
       with collection_guard(ankipath) as cg:
           ptags(cg.col, args.deckname)
+          cg.commit()
 
   if __name__ == "__main__":
-      import sys
-      main(sys.argv[1:])
+      main()
 #+END_SRC
 
 *** ankisearch [{-p|--path} pathname] [{-u|--user} username] [{-d|--deck} deckname] query
@@ -484,30 +490,26 @@ search a given deck
   <<myargsdeck>>
   <<search>>
 
-  def main(argv):
+  def main():
       global verbosity
       parser = argparse.ArgumentParser(parents=[myargsdeck()],
                       description="search the notes in one deck in an Anki collection")
       parser.add_argument("query", nargs=argparse.REMAINDER, action="store",
                           metavar="query",
                           help="query terms for search [e.g., 'tag:foo aspirin']")
-      args = parser.parse_args(argv)
-      verbosity = args.verbosity
-      if verbosity > 1:
-          print args
+      args, ankipath = myparse(parser)
       # "not args.query": http://stackoverflow.com/a/53522
       if ('query' not in args) | (not args.query):
           print "required 'query' term missing"
           parser.print_usage()
           sys.exit();
 
-      ankipath = consankipath(args.path, args.user)
-
       with collection_guard(ankipath) as cg:
           psearch(cg.col, args.deckname, " ".join(args.query))
+          cg.commit()
 
   if __name__ == "__main__":
-      main(sys.argv[1:])
+      main()
 #+END_SRC
 
 *** ankiimport
@@ -550,7 +552,9 @@ search a given deck
   <<user_interface>>
 
   def constag(deckname):
-      return "fordeck%s" % deckname
+      import time
+      secs = int(time.time())
+      return "deck%s-%s" % (deckname, secs)
 
   # get foreign notes: these aren't (yet) real Anki notes, just a
   # represenation that has been read in.
@@ -574,7 +578,7 @@ search a given deck
       ti.importNotes(fnotes)
 
   def doimport(col, deckname, ifilepath):
-      tag = constag(args.deckname); # just run once!
+      tag = constag(deckname)     # just run once!
       ti = TextImporter(col, ifilepath)
       ti.initMapping();
       if showMapping(ti):     # allow user to abort
@@ -589,35 +593,36 @@ search a given deck
                   print txt
           imported = ti._ids      # cards that were imported
           del ti;                 # no longer to be used
-          # now, move any notes from any *other* cards with this tag to this deck
-          did = col.decks.id(deckname)
-          col.decks.setDeck(imported, did)
-          # now, delete any notes in deck that do *not* have this tag
-          xxx()
+          if args.superset:
+              # now, move any notes from any *other* cards with this tag to this deck
+              did = col.decks.id(deckname)
+              col.decks.setDeck(imported, did)
+          if args.subset:
+              # now, delete any notes in deck that do *not* have this tag
+              xxx()
           # now, delete this tag from these cards (no other cards should have this tag)
+          yyy()
           # done!
 
   # http://ankisrs.net/docs/addons.html#the-database
-  def main(argv):
+  def main():
       global verbosity
       parser = argparse.ArgumentParser(parents=[myargsdeck()],
                   description="import an HTML file into a deck in an Anki collection")
       parser.add_argument("-R", "--superset", action="store_true", default=False,
                           help="ensure the Anki deck is a supeRset of the input file")
-          help="make sure all the notes in the input file end up in the Anki deck")
       parser.add_argument("-B", "--subset", action="store_true", default=False,
                           help="ensure the Anki deck is a suBset of the input file")
       parser.add_argument("inputfile", type=str)
-      args = parser.parse_args(argv)
-      verbosity = args.verbosity
 
-      ankipath = consankipath(args.path, args.user)
+      args, ankipath = myparse(parser)
+
       ifilepath = abspath(args.inputfile)
       with collection_guard(ankipath) as cg:
           doimport(cg.col, args.deckname, ifilepath)
+          cg.commit()
 
   if __name__ == "__main__":
-      import sys
-      main(sys.argv[1:])
+      main()
 
 #+END_SRC
