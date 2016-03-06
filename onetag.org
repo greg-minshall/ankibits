@@ -117,8 +117,7 @@ deck['mod'] = m['mod']
   just the tags we used, to move the new cards into the deck we want.
   (assuming we figure *that* out! :)
 
-** some code
-
+** code
 *** parameters
 
 i'm not sure how to get scalar parameters into variables.  the
@@ -159,11 +158,8 @@ produces a value in a of "bar\n", i.e., with a trailing newline.
 also, one might want to say ":cache yes", but *then*, the value passed
 is "nil" (in the case where the cache entry is valid).
 
-
-*** code
-
-**** utilities
-***** collection_guard
+*** utilities
+**** collection_guard
 
 this allows us to open an Anki collection and ensure that the
 collection is closed "no matter what" happens.  (this does *not*
@@ -190,7 +186,7 @@ from http://effbot.org/zone/python-with-statement.htm
           self.__exit__(None, None, None)
 #+END_SRC
 
-***** unescape
+**** unescape
 
 the following html unescape() function is from [[http://stackoverflow.com/a/7088472][this post]] on
 stackoverflow.
@@ -207,7 +203,79 @@ stackoverflow.
       unescape = HTMLParser().unescape
 #+END_SRC
 
-**** ankidecks [--user username] [--path pathname]
+**** recipe577058 (yes/no dialog)
+
+#+name: recipe577058
+#+BEGIN_SRC python :session ps :results silent
+  # from http://code.activestate.com/recipes/577058/
+
+  def query_yes_no(question, default="yes"):
+      import sys
+      """Ask a yes/no question via raw_input() and return their answer.
+
+      "question" is a string that is presented to the user.
+      "default" is the presumed answer if the user just hits <Enter>.
+      It must be "yes" (the default), "no" or None (meaning
+      an answer is required of the user).
+
+      The "answer" return value is one of "yes" or "no".
+      """
+      valid = {"yes":"yes",   "y":"yes",  "ye":"yes",
+               "no":"no",     "n":"no"}
+      if default == None:
+          prompt = " [y/n] "
+      elif default == "yes":
+          prompt = " [Y/n] "
+      elif default == "no":
+          prompt = " [y/N] "
+      else:
+          raise ValueError("invalid default answer: '%s'" % default)
+      # for some reason, a blank line here generates an error
+      while 1:
+          sys.stdout.write(question + prompt)
+          choice = raw_input().lower()
+          if default is not None and choice == '':
+              return default
+          elif choice in valid.keys():
+              return valid[choice]
+          else:
+              sys.stdout.write("Please respond with 'yes' or 'no' "\
+                               "(or 'y' or 'n').\n")
+#+END_SRC
+
+**** myargs, myargsdeck
+
+#+name: myargs
+#+BEGIN_SRC python :results silent
+  import argparse
+
+  def myargs():
+      parser = argparse.ArgumentParser(add_help=False)
+      parser.add_argument("-p", "--path", action="store",
+                          default="~/Documents/Anki", metavar="pathname",
+                          help="pathname to directory holding Anki collections")
+      parser.add_argument("-u", "--user", action="store",
+                          default="User 1", metavar="username",
+                          help="Anki username of collection")
+      parser.add_argument("-v", "--verbosity", action="count",
+                          default=0,
+                          help="increase level of (debugging) verbosity")
+      return parser
+#+END_SRC
+
+#+name: myargsdeck
+#+BEGIN_SRC python :results silent :noweb yes
+  <<myargs>>
+
+  def myargsdeck():
+      parser = argparse.ArgumentParser(parents=[myargs()], add_help=False)
+      parser.add_argument("-d", "-deck", action="store", dest='deckname',
+                          default='Default',
+                          help="name of deck in Anki user's collection")
+      return parser
+#+END_SRC
+
+*** ankidecks [--user username] [--path pathname]
 
 list the decks in the collection.  the optional argument /username/
 argument specifies the "username" of the Anki collection.
@@ -235,6 +303,7 @@ is the pathname where Anki collections are stored.
   <<decks>>
 
   def main():
+      # scope rules (LEGB): http://stackoverflow.com/a/292502
       global verbosity
       parser = argparse.ArgumentParser(description=
                                        "list the decks in an Anki collection")
@@ -252,6 +321,7 @@ is the pathname where Anki collections are stored.
 
       # the above line intentionally left blank
       unexpandedpath = ''.join([args.path, '/', args.user, '/', 'collection.anki2'])
+      # https://docs.python.org/2/library/os.path.html#os.path.expanduser
       ankipath = os.path.expanduser(os.path.expandvars(unexpandedpath))
       if verbosity:
           print ankipath
@@ -263,7 +333,7 @@ is the pathname where Anki collections are stored.
       main()
 #+END_SRC
 
-**** ankinotes [--user username] [--path pathname] [{-d|--deck} deckname]
+*** ankinotes [--user username] [--path pathname] [{-d|--deck} deckname]
 
 list out the notes from a given deck (the name of which is required).
 
@@ -323,7 +393,7 @@ list out the notes from a given deck (the name of which is required).
       main()
 #+END_SRC
 
-**** ankitags [{-u|--user} username] [{-p|--path} pathname] [{-d|--deck} deckname]
+*** ankitags [{-u|--user} username] [{-p|--path} pathname] [{-d|--deck} deckname]
 
 list the tags that exist in a given deck, along with the number of
 notes with each tag.
@@ -336,6 +406,7 @@ notes with each tag.
       ids = col.findNotes("deck:%s" % deckname)
       if verbosity:
           print ids;
+      # https://docs.python.org/2/library/stdtypes.html#dict
       tags = dict()
       for i, id in enumerate(ids):
           note = col.getNote(id)
@@ -344,6 +415,7 @@ notes with each tag.
           for s in note.stringTags().split():
               if verbosity:
                   print s
+              # "s not in tags": http://stackoverflow.com/a/18300596
               if s not in tags:
                   tags[s] = 1
               else:
@@ -392,7 +464,7 @@ notes with each tag.
       main(sys.argv[1:])
 #+END_SRC
 
-**** ankisearch [{-p|--path} pathname] [{-u|--user} username] [{-d|--deck} deckname] query
+*** ankisearch [{-p|--path} pathname] [{-u|--user} username] [{-d|--deck} deckname] query
 
 search a given deck
 #+name: search
@@ -441,6 +513,7 @@ search a given deck
                           help="query terms for search [e.g., 'tag:foo aspirin']")
       args = parser.parse_args(argv)
       verbosity = args.verbosity
+      # "not args.query": http://stackoverflow.com/a/53522
       if ('query' not in args) | (not args.query):
           print "required 'query' term missing"
           parser.print_help()
@@ -462,46 +535,8 @@ search a given deck
       main(sys.argv[1:])
 #+END_SRC
 
-**** ankiimport
+*** ankiimport
 
-
-#+name: recipe577058
-#+BEGIN_SRC python :session ps :results silent
-  # from http://code.activestate.com/recipes/577058/
-
-  def query_yes_no(question, default="yes"):
-      import sys
-      """Ask a yes/no question via raw_input() and return their answer.
-
-      "question" is a string that is presented to the user.
-      "default" is the presumed answer if the user just hits <Enter>.
-      It must be "yes" (the default), "no" or None (meaning
-      an answer is required of the user).
-
-      The "answer" return value is one of "yes" or "no".
-      """
-      valid = {"yes":"yes",   "y":"yes",  "ye":"yes",
-               "no":"no",     "n":"no"}
-      if default == None:
-          prompt = " [y/n] "
-      elif default == "yes":
-          prompt = " [Y/n] "
-      elif default == "no":
-          prompt = " [y/N] "
-      else:
-          raise ValueError("invalid default answer: '%s'" % default)
-      # for some reason, a blank line here generates an error
-      while 1:
-          sys.stdout.write(question + prompt)
-          choice = raw_input().lower()
-          if default is not None and choice == '':
-              return default
-          elif choice in valid.keys():
-              return valid[choice]
-          else:
-              sys.stdout.write("Please respond with 'yes' or 'no' "\
-                               "(or 'y' or 'n').\n")
-#+END_SRC
 
 #+name: user_interface
 #+BEGIN_SRC python :noweb yes
