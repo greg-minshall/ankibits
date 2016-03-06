@@ -272,14 +272,13 @@ stackoverflow.
 
   <<unescape>>
   
-
   def pnotes(col, deckname):
       ids = col.findNotes("deck:%s" % deckname)
       if verbosity:
           print ids;
       for i, id in enumerate(ids):
           note = col.getNote(id)
-          values = note.values();
+          values = note.values()
           print unescape("%s\t%s" % (values[0], values[1]))
 #+END_SRC
 
@@ -400,38 +399,26 @@ search a given deck
 #+BEGIN_SRC python :results silent :noweb yes
   from anki import Collection
 
-  <<collection_guard>>
+  <<unescape>>
 
-  def ptags(col, deckname):
-      ids = col.findNotes("deck:%s" % deckname)
+  def psearch(col, deckname, query):
+      ids = []
+      ids = col.findNotes("".join(["deck:", deckname, " ", query]))
       if verbosity:
           print ids;
-      tags = dict()
       for i, id in enumerate(ids):
           note = col.getNote(id)
-          if verbosity:
-              print note.stringTags()
-          for s in note.stringTags().split():
-              if verbosity:
-                  print s
-              if s not in tags:
-                  tags[s] = 1
-              else:
-                  tags[s] += 1
-      for t in iter(tags):
-          print t, tags[t]
-
-  def ptagsrun(ankipath, deckname):
-      with collection_guard(ankipath) as cg:
-          ptags(cg.col, deckname)
+          values = note.values()
+          print unescape("%s\t%s" % (values[0], values[1]))
 #+END_SRC
 
 #+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankisearch.py
-  <<search>>
-
   import argparse
   import os
   import sys
+
+  <<collection_guard>>
+  <<search>>
 
   def main(argv):
       global verbosity
@@ -466,7 +453,9 @@ search a given deck
       ankipath = os.path.expanduser(os.path.expandvars(unexpandedpath))
       if verbosity:
           print ankipath, args.deckname
-      psearchrun(ankipath, args.deckname);
+          print args.query
+      with collection_guard(ankipath) as cg:
+          psearch(cg.col, args.deckname, " ".join(args.query))
 
   if __name__ == "__main__":
       import sys
