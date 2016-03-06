@@ -443,6 +443,8 @@ search a given deck
 
   <<unescape>>
 
+  # XXX here (and elsewhere) check that deck exists
+  # XXX graceful error message if user, database file doesn't exist
   def psearch(col, deckname, query):
       ids = []
       ids = col.findNotes("".join(["deck:", deckname, " ", query]))
