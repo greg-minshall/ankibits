@@ -357,32 +357,18 @@ list out the notes from a given deck (the name of which is required).
   import argparse
 
   <<collection_guard>>
+  <<consankipath>>
+  <<myargsdeck>>
   <<notes>>
 
   def main():
       global verbosity
-      parser = argparse.ArgumentParser(description=
-                                  "list the notes in one deck in an Anki collection")
-      parser.add_argument("-d", "-deck", action="store", dest='deckname',
-                          default='Default',
-                          help="name of deck in Anki user's collection")
-      parser.add_argument("-p", "--path", action="store",
-                          default="~/Documents/Anki", metavar="pathname",
-                          help="pathname to directory holding Anki collections")
-      parser.add_argument("-u", "--user", action="store",
-                          default="User 1", metavar="username",
-                          help="Anki username of collection")
-      parser.add_argument("-v", "--verbosity", action="count",
-                          default=0,
-                          help="increase level of (debugging) verbosity")
+      parser = argparse.ArgumentParser(parents=[myargsdeck()],
+                  description="list the notes in one deck in an Anki collection")
       args = parser.parse_args()
       verbosity = args.verbosity
 
-      # the above line intentionally left blank
-      unexpandedpath = ''.join([args.path, '/', args.user, '/', 'collection.anki2'])
-      ankipath = os.path.expanduser(os.path.expandvars(unexpandedpath))
-      if verbosity:
-          print ankipath, args.deckname
+      ankipath = consankipath(args.path, args.user);
 
       with collection_guard(ankipath) as cg:
           pnotes(cg.col, args.deckname)
