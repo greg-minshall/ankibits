@@ -589,13 +589,20 @@ search a given deck
       """make sure all cards with tag TAG are in Anki deck DECKNAME"""
       did = col.decks.byName(deckname)['id']
       ids = []
-      ids = col.findCards("tag:%s" % tag)
+      ids = col.findCards("-deck:%s tag:%s" % (deckname, tag))
       if verbosity:
           print "superset ids: %s" % ids
       col.decks.setDeck(ids, did)
 
   def subset(col, deckname, tag):
       """make sure only cards with tag TAG are in Anki deck DECKNAME"""
+      # XXX just deletes the cards; nicer might be to stash them somewhere
+      ids = []
+      ids = col.findCards("deck:%s -tag:%s" % (deckname, tag))
+      if verbosity:
+          print "superset ids: %s" % ids
+      col.remCards(ids, notes=True) # not sure about notes, but it makes
+                                    # sense for how we use it
 
   # get foreign notes: these aren't (yet) real Anki notes, just a
   # represenation that has been read in.
