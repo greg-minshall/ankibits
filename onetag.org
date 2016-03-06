@@ -278,6 +278,8 @@ stackoverflow.
 #+name: consankipath
 #+BEGIN_SRC python :results silent
   def consankipath(path, user):
+      import os
+
       unexpandedpath = ''.join([path, '/', user, '/', 'collection.anki2'])
       # https://docs.python.org/2/library/os.path.html#os.path.expanduser
       ankipath = os.path.expanduser(os.path.expandvars(unexpandedpath))
@@ -306,9 +308,6 @@ is the pathname where Anki collections are stored.
 
 
 #+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankidecks.py
-  import sys, os
-  import argparse
-
   <<collection_guard>>
   <<decks>>
   <<myargs>>
@@ -352,10 +351,6 @@ list out the notes from a given deck (the name of which is required).
 #+END_SRC
 
 #+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankinotes.py
-  import sys
-  import os
-  import argparse
-
   <<collection_guard>>
   <<consankipath>>
   <<myargsdeck>>
@@ -409,9 +404,6 @@ notes with each tag.
 #+END_SRC
 
 #+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankitags.py
-  import os
-  import argparse
-
   <<collection_guard>>
   <<consankipath>>
   <<myargsdeck>>
@@ -457,7 +449,6 @@ search a given deck
 #+END_SRC
 
 #+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankisearch.py
-  import os
   import sys
 
   <<collection_guard>>
@@ -477,7 +468,7 @@ search a given deck
       # "not args.query": http://stackoverflow.com/a/53522
       if ('query' not in args) | (not args.query):
           print "required 'query' term missing"
-          parser.print_help()
+          parser.print_usage()
           sys.exit();
       if verbosity > 1:
           print args
@@ -491,7 +482,6 @@ search a given deck
           psearch(cg.col, args.deckname, " ".join(args.query))
 
   if __name__ == "__main__":
-      import sys
       main(sys.argv[1:])
 #+END_SRC
 
