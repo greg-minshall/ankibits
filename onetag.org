@@ -245,8 +245,25 @@ stackoverflow.
 
 **** myargs, myargsdeck
 
-#+name: myargs
+#+name: myparse
 #+BEGIN_SRC python :results silent
+  import argparse
+
+  def myparse(parser, argv):
+      global verbosity
+
+      args = parser.parse_args(argv)
+      verbosity = args.verbosity
+
+      if verbosity > 1:
+          print args
+
+      return args
+#+END_SRC
+
+
+#+name: myargs
+#+BEGIN_SRC python :results silent :noweb yes
   import argparse
 
   def myargs():
@@ -261,7 +278,10 @@ stackoverflow.
                           default=0,
                           help="increase level of (debugging) verbosity")
       return parser
+
+      <<myparse>>                 # for convenience
 #+END_SRC
+
 
 #+name: myargsdeck
 #+BEGIN_SRC python :results silent :noweb yes
@@ -473,18 +493,15 @@ search a given deck
                           help="query terms for search [e.g., 'tag:foo aspirin']")
       args = parser.parse_args(argv)
       verbosity = args.verbosity
+      if verbosity > 1:
+          print args
       # "not args.query": http://stackoverflow.com/a/53522
       if ('query' not in args) | (not args.query):
           print "required 'query' term missing"
           parser.print_usage()
           sys.exit();
-      if verbosity > 1:
-          print args
 
       ankipath = consankipath(args.path, args.user)
-      if verbosity:
-          print args.deckname
-          print args.query
 
       with collection_guard(ankipath) as cg:
           psearch(cg.col, args.deckname, " ".join(args.query))
@@ -556,43 +573,48 @@ search a given deck
       col.decks.select(did)
       ti.importNotes(fnotes)
 
+  def doimport(col, deckname, ifilepath):
+      tag = constag(args.deckname); # just run once!
+      ti = TextImporter(col, ifilepath)
+      ti.initMapping();
+      if showMapping(ti):     # allow user to abort
+          # first, get anki read in the notes (to an intermediate form)
+          fnotes = getfnotes(ti)
+          # next, add our tag to the notes
+          addtag(ti, fnotes, tag)
+          # now, add these notes to the designated deck
+          add2col(col, deckname, ti, fnotes)
+          if ti.log:
+              for txt in ti.log:
+                  print txt
+          imported = ti._ids      # cards that were imported
+          del ti;                 # no longer to be used
+          # now, move any notes from any *other* cards with this tag to this deck
+          did = col.decks.id(deckname)
+          col.decks.setDeck(imported, did)
+          # now, delete any notes in deck that do *not* have this tag
+          xxx()
+          # now, delete this tag from these cards (no other cards should have this tag)
+          # done!
+
   # http://ankisrs.net/docs/addons.html#the-database
   def main(argv):
       global verbosity
       parser = argparse.ArgumentParser(parents=[myargsdeck()],
                   description="import an HTML file into a deck in an Anki collection")
-      parser.add_argument("-s", "--strict", action="store_true", default=False,
-                  help="force the Anki deck to be an exact replica of the input file")
+      parser.add_argument("-R", "--superset", action="store_true", default=False,
+                          help="ensure the Anki deck is a supeRset of the input file")
+          help="make sure all the notes in the input file end up in the Anki deck")
+      parser.add_argument("-B", "--subset", action="store_true", default=False,
+                          help="ensure the Anki deck is a suBset of the input file")
       parser.add_argument("inputfile", type=str)
       args = parser.parse_args(argv)
       verbosity = args.verbosity
 
       ankipath = consankipath(args.path, args.user)
       ifilepath = abspath(args.inputfile)
-      tag = constag(args.deckname); # just run once!
       with collection_guard(ankipath) as cg:
-          col = cg.col
-          ti = TextImporter(col, ifilepath)
-          ti.initMapping();
-          if showMapping(ti):     # allow user to abort
-              # first, get anki read in the notes (to an intermediate form)
-              fnotes = getfnotes(ti)
-              # next, add our tag to the notes
-              addtag(ti, fnotes, tag)
-              # now, add these notes to the designated deck
-              add2col(col, deckname, ti, fnotes)
-              if ti.log:
-                  for txt in ti.log:
-                      print txt
-              imported = ti._ids      # cards that were imported
-              del ti;                 # no longer to be used
-              # now, move any notes from any *other* cards with this tag to this deck
-              did = col.decks.id(deckname)
-              col.decks.setDeck(imported, did)
-              # now, delete any notes in deck that do *not* have this tag
-              xxx()
-              # now, delete this tag from these cards (no other cards should have this tag)
-              # done!
+          doimport(cg.col, args.deckname, ifilepath)
 
   if __name__ == "__main__":
       import sys
