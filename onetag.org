@@ -248,7 +248,7 @@ stackoverflow.
                                "(or 'y' or 'n').\n")
 #+END_SRC
 
-**** myargs, myargsdeck
+**** myparse, myargs, myargsdeck
 
 #+name: myparse
 #+BEGIN_SRC python :results silent :noweb yes
