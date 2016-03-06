@@ -162,7 +162,8 @@ is "nil" (in the case where the cache entry is valid).
 
 *** code
 
-**** collection_guard
+**** utilities
+***** collection_guard
 
 this allows us to open an Anki collection and ensure that the
 collection is closed "no matter what" happens.  (this does *not*
@@ -187,6 +188,23 @@ from http://effbot.org/zone/python-with-statement.htm
               self.col = None
       def close(self):
           self.__exit__(None, None, None)
+#+END_SRC
+
+***** unescape
+
+the following html unescape() function is from [[http://stackoverflow.com/a/7088472][this post]] on
+stackoverflow.
+
+#+name: unescape
+#+BEGIN_SRC python :results silent
+  try:
+      from html import unescape  # python 3.4+
+  except ImportError:
+      try:
+          from html.parser import HTMLParser  # python 3.x (<3.4)
+      except ImportError:
+          from HTMLParser import HTMLParser  # python 2.x
+      unescape = HTMLParser().unescape
 #+END_SRC
 
 **** ankidecks [--user username] [--path pathname]
@@ -248,23 +266,6 @@ is the pathname where Anki collections are stored.
 **** ankinotes [--user username] [--path pathname] [{-d|--deck} deckname]
 
 list out the notes from a given deck (the name of which is required).
-
-
-the following html unescape() function is from [[http://stackoverflow.com/a/7088472][this post]] on
-stackoverflow.
-
-#+name: unescape
-#+BEGIN_SRC python :results silent
-  try:
-      from html import unescape  # python 3.4+
-  except ImportError:
-      try:
-          from html.parser import HTMLParser  # python 3.x (<3.4)
-      except ImportError:
-          from HTMLParser import HTMLParser  # python 2.x
-      unescape = HTMLParser().unescape
-#+END_SRC
-
 
 #+name: notes
 #+BEGIN_SRC python :results silent :noweb yes
@@ -390,7 +391,6 @@ notes with each tag.
       import sys
       main(sys.argv[1:])
 #+END_SRC
-
 
 **** ankisearch [{-p|--path} pathname] [{-u|--user} username] [{-d|--deck} deckname] query
 
