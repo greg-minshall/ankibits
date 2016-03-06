@@ -511,22 +511,17 @@ search a given deck
       return query_yes_no("proceed with import?", default=None) == 'yes'
 #+END_SRC
 
-#+BEGIN_SRC python :noweb yes
-  <<collection_guard>>
-  <<user_interface>>
-#+END_SRC
-
-#+RESULTS:
-: None
 
 #+name: import
-#+BEGIN_SRC python :noweb yes
-  <<collection_guard>>
-  <<user_interface>>
-
+#+BEGIN_SRC python :noweb yes :tangle ankiimport.py
   from anki import Collection
   from anki.importing import TextImporter
   from anki.tags import TagManager
+
+  <<collection_guard>>
+  <<consankipath>>
+  <<myargsdeck>>
+  <<user_interface>>
 
   def constag(deckname):
       return "fordeck%s" % deckname
@@ -553,11 +548,21 @@ search a given deck
       ti.importNotes(fnotes)
 
   # http://ankisrs.net/docs/addons.html#the-database
-  def run(ankipath, deckname):
-      tag = constag(deckname);    # just run once!
+  def main(argv):
+      global verbosity
+      parser = argparse.ArgumentParser(parents=[myargsdeck()],
+                  description="import an HTML file into a deck in an Anki collection")
+      parser.add_argument("-s", "--strict", action="store_true", default=False,
+                  help="force the Anki deck to be an exact replica of the input file")
+      parser.add_argument("inputfile", type=str)
+      args = parser.parse_args(argv)
+      verbosity = args.verbosity
+
+      ankipath = consankipath(args.path, args.user)
+      tag = constag(args.deckname); # just run once!
       with collection_guard(ankipath) as cg:
           col = cg.col
-          ti = TextImporter(col, imfile)
+          ti = TextImporter(col, args.inputfile)
           ti.initMapping();
           if showMapping(ti):     # allow user to abort
               # first, get anki read in the notes (to an intermediate form)
@@ -578,20 +583,10 @@ search a given deck
               xxx()
               # now, delete this tag from these cards (no other cards should have this tag)
               # done!
+
+  if __name__ == "__main__":
+      import sys
+      main(sys.argv[1:])
+
 #+END_SRC
-
-#+RESULTS: import
-: None
-
-#+BEGIN_SRC python :session ps :results output :var ankipath=anki2 :var deckname=deckname :var imfile=imfile :noweb yes
-  <<import>>
-
-  import pdb
-  #  pdb.run('run(ankipath, deckname)')
-  run(ankipath, deckname)
-#+END_SRC
-
-#+RESULTS:
-#+begin_example
-#+end_example
 
