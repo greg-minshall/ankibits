@@ -197,6 +197,16 @@ stackoverflow.
 
 but, some [[http://stackoverflow.com/questions/24395155/python-unencode-unicode-html-hexadecimal][problems]] when printing out notes with non-ASCII characters
 in them.
+#+BEGIN_EXAMPLE
+EncodeError: 'ascii' codec can't encode character u'\xd6' in position 21: ordinal not in range(128)
+#+END_EXAMPLE
+this [[http://stackoverflow.com/a/7892892][environment variable]] approach works.  but isn't optimal.  when
+writing to the terminal, sys.stdout.encoding == 'UTF-8', but when
+writing to a file or pipe, it is set to 'None', which i guess (this
+always makes my head hurt) causes the error message.  would like a way
+to generally change the encoding of standard out.
+
+[[http://stackoverflow.com/a/2738005][this]] appears to do the trick.
 
 #+name: unescape
 #+BEGIN_SRC python :results silent
@@ -263,6 +273,8 @@ in them.
   def myparse(parser, argv=None, deckmustexist=True):
       """parse the arguments; set up ankipath and, optionally, check if deck exists"""
       import argparse
+      import codecs
+      import sys
 
       global verbosity
 
@@ -283,6 +295,10 @@ in them.
                   import sys
                   print "error: deckname %s does not exist" % args.deckname
                   sys.exit(3)
+
+      # sigh.  we *also* make sure stdout uses utf-8 encoding
+      # (to avoid the errors mentioned above at unescape())
+      sys.stdout = codecs.getwriter('utf-8')(sys.stdout)
 
       return [args, ankipath]
 #+END_SRC
