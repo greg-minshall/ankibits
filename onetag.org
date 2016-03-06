@@ -195,6 +195,9 @@ from http://effbot.org/zone/python-with-statement.htm
 the following html unescape() function is from [[http://stackoverflow.com/a/7088472][this post]] on
 stackoverflow.
 
+but, some [[http://stackoverflow.com/questions/24395155/python-unencode-unicode-html-hexadecimal][problems]] when printing out notes with non-ASCII characters
+in them.
+
 #+name: unescape
 #+BEGIN_SRC python :results silent
   try:
@@ -273,6 +276,7 @@ stackoverflow.
       if verbosity:
           print ankipath
 
+      # dir(): http://stackoverflow.com/a/191029
       if ('deckname' in dir(args)) & deckmustexist:
           with collection_guard(ankipath) as cg:
               if cg.col.decks.byName(args.deckname) == None:
@@ -311,7 +315,7 @@ stackoverflow.
 
   def myargsdeck():
       parser = argparse.ArgumentParser(parents=[myargs()], add_help=False)
-      parser.add_argument("-d", "-deck", action="store", dest='deckname',
+      parser.add_argument("-d", "--deck", action="store", dest='deckname',
                           default='Default',
                           help="name of deck in Anki user's collection")
       return parser
@@ -357,7 +361,7 @@ is the pathname where Anki collections are stored.
 #+END_SRC
 
 
-#+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankidecks.py
+#+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankidecks :shebang "#!/usr/bin/env python"
   import argparse
 
   <<collection_guard>>
@@ -400,7 +404,7 @@ list out the notes from a given deck (the name of which is required).
           print unescape("%s\t%s" % (values[0], values[1]))
 #+END_SRC
 
-#+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankinotes.py
+#+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankinotes :shebang "#!/usr/bin/env python"
   <<collection_guard>>
   <<myargsdeck>>
   <<notes>>
@@ -450,7 +454,7 @@ notes with each tag.
           print t, tags[t]
 #+END_SRC
 
-#+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankitags.py
+#+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankitags :shebang "#!/usr/bin/env python"
   <<collection_guard>>
   <<myargsdeck>>
   <<tags>>
@@ -491,7 +495,7 @@ search a given deck
           print unescape("%s\t%s" % (values[0], values[1]))
 #+END_SRC
 
-#+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankisearch.py
+#+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankisearch :shebang "#!/usr/bin/env python"
   import sys
 
   <<collection_guard>>
@@ -548,7 +552,7 @@ search a given deck
 
 
 #+name: import
-#+BEGIN_SRC python :noweb yes :tangle ankiimport.py
+#+BEGIN_SRC python :noweb yes :tangle ankiimport :shebang "#!/usr/bin/env python"
   import argparse
   from anki import Collection
   from anki.importing import TextImporter
