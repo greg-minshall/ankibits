@@ -95,7 +95,7 @@ deck['mod'] = m['mod']
   # get note type for deck (could be a parameter)
   m = col.models.byName("Basic")
   # select deck
-  did = col.decks.id(deckName)
+  did = col.decks.byName(deckname)
   # make sure we are importing to desired deck
   col.decks.select(did)
   if did != ti.model['did']:
@@ -578,7 +578,7 @@ search a given deck
 
   def superset(col, deckname, tag):
       """make sure all notes with tag TAG are in Anki deck DECKNAME"""
-      did = col.decks.id(deckname)
+      did = col.decks.byName(deckname)
       ids = []
       ids = col.findNotes("tag:%s" % tag)
       for i, id in enumerate(ids):
@@ -601,7 +601,7 @@ search a given deck
   def add2col(col, deckname, ti, fnotes):
       # XXX should we remember previously selected deck (and reselect it
       # when we're done here)?
-      did = col.decks.id(deckname)
+      did = col.decks.byName(deckname)
       if did != ti.model['did']:
           ti.model['did'] = did
           col.models.save(ti.model)
@@ -630,7 +630,7 @@ search a given deck
           if subset:
               # now, delete any notes in deck that do *not* have this tag
               yyy()
-          did = col.decks.id(deckname)
+          did = col.decks.byName(deckname)
           col.decks.setDeck(imported, did)
           # now, delete this tag from these cards (no other cards should have this tag)
           removetag(col, tag)
