@@ -592,10 +592,8 @@ search a given deck
       ids = col.findCards("tag:%s" % tag)
       if verbosity:
           print "superset ids: %s" % ids
-      for i, id in enumerate(ids):
-          note = col.getCard(id)
-          col.decks.setDeck(imported, did)
-    
+      col.decks.setDeck(ids, did)
+
   def subset(col, deckname, tag):
       """make sure only cards with tag TAG are in Anki deck DECKNAME"""
 
@@ -622,7 +620,7 @@ search a given deck
       col.decks.select(did)
       ti.importNotes(fnotes)
 
-  def doimport(col, deckname, ifilepath, subset, superset):
+  def doimport(col, deckname, ifilepath, dosubset, dosuperset):
       tag = constag(deckname)     # just run once!
       ti = TextImporter(col, ifilepath)
       ti.initMapping();
@@ -638,12 +636,12 @@ search a given deck
                   print unescape(txt)
           imported = ti._ids      # cards that were imported
           del ti;                 # no longer to be used
-          if superset:
+          if dosuperset:
               # now, move any notes from any *other* decks with this tag to this deck
-              superset()
-          if subset:
+              superset(col, deckname, tag)
+          if dosubset:
               # now, delete any notes in deck that do *not* have this tag
-              subset()
+              subset(col, deckname, tag)
           # now, delete this tag from these cards (no other cards should have this tag)
           removetag(col, tag)
           # done!
@@ -664,7 +662,7 @@ search a given deck
       ifilepath = abspath(args.inputfile)
       with collection_guard(ankipath) as cg:
           doimport(cg.col, args.deckname, ifilepath,
-                   subset=args.subset, superset=args.superset)
+                   dosubset=args.subset, dosuperset=args.superset)
           cg.commit()
 
   if __name__ == "__main__":
