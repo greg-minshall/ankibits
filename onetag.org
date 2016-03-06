@@ -562,15 +562,30 @@ search a given deck
 
   def removetag(col, tag):
       """remove all instances of a given tag from an Anki collection"""
+      # (above) https://www.python.org/dev/peps/pep-0257/
       ids = []
       ids = col.findNotes("tag:%s" % tag)
-      print ids
+      if verbosity:
+          print "ids of notes with tag %s: %s" % (tag, ids)
       for i, id in enumerate(ids):
           note = col.getNote(id)
-          print "%s %s//%s" % (id, note, note.tags)
+          if verbosity > 2:
+              print "%s %s//%s" % (id, note, note.tags)
           note.delTag(tag)
           note.flush()
-          print "%s %s//%s" % (id, note, note.tags)
+          if verbosity > 2:
+              print "%s %s//%s" % (id, note, note.tags)
+
+  def superset(col, deckname, tag):
+      """make sure all notes with tag TAG are in Anki deck DECKNAME"""
+      did = col.decks.id(deckname)
+      ids = []
+      ids = col.findNotes("tag:%s" % tag)
+      for i, id in enumerate(ids):
+          note = col.getNote(id)
+    
+  def subset(col, deckname, tag):
+      """make sure all notes in Anki deck DECKNAME have tag TAG"""
 
   # get foreign notes: these aren't (yet) real Anki notes, just a
   # represenation that has been read in.
