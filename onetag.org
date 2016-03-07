@@ -358,6 +358,32 @@ to generally change the encoding of standard out.
       return os.path.abspath(os.path.expanduser(os.path.expandvars(path)))
 #+END_SRC
 
+**** pager
+
+[[http://stackoverflow.com/questions/89228/calling-an-external-command-in-python#89243][invoking a sub-process from python]]; but, for us, we need to use [[https://docs.python.org/2/library/subprocess.html][popen]].
+
+#+name: pager
+#+BEGIN_SRC python :noweb yes
+  def pager(text):
+      """display text on the terminal (via less)"""
+      import os
+      import shlex
+      import subprocess
+
+      # figure out pager to use
+      # http://stackoverflow.com/a/4907053
+      try:
+          pager = os.environ['PAGER']
+      except KeyError:
+          # does "less" exist?
+      args = shlex.split("less")
+      p = subprocess.Popen(args, stdin=subprocess.PIPE)
+      p.communicate(text)
+      p.stdin.close()
+      p.wait()
+#+END_SRC
+
+
 *** ankidecks [--user username] [--path pathname]
 
 list the decks in the collection.  the optional argument /username/
@@ -586,6 +612,17 @@ search a given deck
       import sys
       sys.exit(3)
 
+  # XXX XXX XXX
+  # tags with time, etc., on them are maybe useful for debugging,
+  # but they consume lots of resources (as they cause Anki to say "well,
+  # the entire deck has changed, and therefore upload/download the
+  # entire deck).  ditto for first adding tags to a deck that had no
+  # tags, then deleting all the tags: Anki still considers the entire
+  # deck to have changed, consuming lots of bandwidth.
+  #
+  # one solution would be to name the tag '"deck-%s" % deckname', and
+  # *leave* the tag in the deck.  seems messy, though, having those tags
+  # lying around.
   def constag(deckname):
       # https://docs.python.org/2/library/time.html
       import time
@@ -671,11 +708,15 @@ search a given deck
       if showMapping(ti):     # allow user to abort
           # first, get anki read in the notes (to an intermediate form)
           fnotes = getfnotes(ti)
-          # next, add our tag to the notes
-          addtag(ti, fnotes, tag)
+          # next, add our tag to the notes (if we need it)
+          if dosuperset | dosubset:
+              addtag(ti, fnotes, tag)
           # now, add these notes to the designated deck
           add2col(col, deckname, ti, fnotes)
           if ti.log:
+              # XXX don't print out all those lines; summarize (print
+              # out first 3 lines), give option for paging through
+              # everything
               for txt in ti.log:
                   print unescape(txt)
           del ti;                 # no longer to be used
@@ -686,7 +727,8 @@ search a given deck
               # now, delete any notes in deck that do *not* have this tag
               subset(col, deckname, tag)
           # now, delete this tag from these cards (no other cards should have this tag)
-          removetag(col, tag)
+          if dosuperset | dosubset:
+              removetag(col, tag)
           # done!
 
   # http://ankisrs.net/docs/addons.html#the-database
