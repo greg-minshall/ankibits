@@ -63,11 +63,6 @@ then, needed to copy all the files to ~/usr/lib/python/anki/ again
 cool.  now have an x11 version of anki ("% ./runanki").
 
 ** some bugs maybe in dae's code/documentation
-
-** random documentation
-
-nice [[http://www.norvig.com/python-lisp.html][comparison]] of Python and Lisp.
-
 *** [[http://ankisrs.net/docs/addons.html][add-on documentation]] bugs
 
 + in "Import a text file into the collection", should
@@ -106,16 +101,17 @@ deck['mod'] = m['mod']
   ti.run()
   col.close()
 #+END_SRC
+** random documentation
 
-#+RESULTS:
+nice [[http://www.norvig.com/python-lisp.html][comparison]] of Python and Lisp.
 
-  it appears that the fnotes themselves maybe contain information
-  about the destination deck.  or, at least, that when importing, one
-  of the rows in addNew is supposed to contain the deck name?
+it appears that the fnotes themselves maybe contain information
+about the destination deck.  or, at least, that when importing, one
+of the rows in addNew is supposed to contain the deck name?
 
-  we could import, then use the _ids in the TextImporter object, or
-  just the tags we used, to move the new cards into the deck we want.
-  (assuming we figure *that* out! :)
+we could import, then use the _ids in the TextImporter object, or
+just the tags we used, to move the new cards into the deck we want.
+(assuming we figure *that* out! :)
 
 ** code
 *** parameters
@@ -382,7 +378,6 @@ to generally change the encoding of standard out.
       p.stdin.close()
       p.wait()
 #+END_SRC
-
 
 *** ankidecks [--user username] [--path pathname]
 
