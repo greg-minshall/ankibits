@@ -568,25 +568,62 @@ search a given deck
 #+BEGIN_SRC python :noweb yes
   <<recipe577058>>
 
+  def str2list(expected):
+      """given a string representation of a list (of strings), make a list"""
+
+      if expected:
+          import re
+          # make sure this looks good
+          if re.match('\A\[[\w,]+\]\Z', expected):
+              list = re.split('[\[\],]', expected)[1:-1]
+              if verbosity:
+                  print "str2list(%s) returns %s" % (expected, list)
+              return list
+      return expected             # i.e., None
+
+
+
   # two functions: one that shows the mapping, allows one to proceed or
   # cancel (returns True or False); a second shows the results of the
   # import, allows one to accept or abort (returns True or False)
 
   # XXX allow user to specify expected mapping, abort (with message) if
   # different; don't query if same
-  def showMapping(ti):
-      """show the mapping (of note fields to card contents) to the user, giving him/her the opportunity to cancel the import"""
-      # from showMapping in aqt/importing.py
-      for num in range(len(ti.mapping)):
-          intro = "Field %d of file is:" % (num+1)
-          if ti.mapping[num] == "_tags":
-              where = "mapped to Tags"
-          elif ti.mapping[num]:
-              where = "mapped to %s" % ti.mapping[num]
-          else:
-              where = "<ignored>"
-          print "%s%s" % (intro, where)
-      return query_yes_no("proceed with import?", default=None) == 'yes'
+  def checkmapping(ti, expected):
+      """check the mapping (of note fields to card contents)
+
+  if the user specified an expected mapping, check that, aborting (with
+  an error message) if it doesn't match.  if no expected mapping was
+  specified, display the mapping to the user, giving him/her the
+  opportunity to cancel the import
+
+      """
+      if expected:
+          mapping = []            # build up the actual mapping
+          for num in range(len(ti.mapping)):
+              if ti.mapping[num] == '_tags':
+                  mapping = mapping + ['tags'];
+              elif ti.mapping[num]:
+                  mapping = mapping + [ti.mapping[num].lower()]
+              else:
+                  mapping = mapping + ["ignored"]
+          if mapping != expected: # if it doesn't match the expected mapping
+              print "expected mapping (%s) not equal to computed (%s)" % \
+                  (expected, mapping)
+              abort()             # abort
+      else:
+          # from showMapping in aqt/importing.py
+          for num in range(len(ti.mapping)):
+              intro = "Field %d of file is:" % (num+1)
+              if ti.mapping[num] == "_tags":
+                  where = "mapped to Tags"
+              elif ti.mapping[num]:
+                  where = "mapped to %s" % ti.mapping[num]
+              else:
+                  where = "<ignored>"
+              print "%s%s" % (intro, where)
+          if query_yes_no("proceed with import?", default=None) == 'no':
+              abort()
 #+END_SRC
 
 
@@ -695,36 +732,36 @@ search a given deck
       col.decks.select(did)
       ti.importNotes(fnotes)
 
-  def doimport(col, deckname, ifilepath, dosubset, dosuperset):
+  def doimport(col, deckname, ifilepath, mapping, dosubset, dosuperset):
       tag = constag(deckname)     # just run once!
       ti = TextImporter(col, ifilepath)
       ti.allowHTML = True
       ti.initMapping();
-      if showMapping(ti):     # allow user to abort
-          # first, get anki read in the notes (to an intermediate form)
-          fnotes = getfnotes(ti)
-          # next, add our tag to the notes (if we need it)
-          if dosuperset | dosubset:
-              addtag(ti, fnotes, tag)
-          # now, add these notes to the designated deck
-          add2col(col, deckname, ti, fnotes)
-          if ti.log:
-              # XXX don't print out all those lines; summarize (print
-              # out first 3 lines), give option for paging through
-              # everything
-              for txt in ti.log:
-                  print unescape(txt)
-          del ti;                 # no longer to be used
-          if dosuperset:
-              # now, move any notes from any *other* decks with this tag to this deck
-              superset(col, deckname, tag)
-          if dosubset:
-              # now, delete any notes in deck that do *not* have this tag
-              subset(col, deckname, tag)
-          # now, delete this tag from these cards (no other cards should have this tag)
-          if dosuperset | dosubset:
-              removetag(col, tag)
-          # done!
+      checkmapping(ti, mapping)    # this may abort
+      # first, get anki read in the notes (to an intermediate form)
+      fnotes = getfnotes(ti)
+      # next, add our tag to the notes (if we need it)
+      if dosuperset | dosubset:
+          addtag(ti, fnotes, tag)
+      # now, add these notes to the designated deck
+      add2col(col, deckname, ti, fnotes)
+      if ti.log:
+          # XXX don't print out all those lines; summarize (print
+          # out first 3 lines), give option for paging through
+          # everything
+          for txt in ti.log:
+              print unescape(txt)
+      del ti;                 # no longer to be used
+      if dosuperset:
+          # now, move any notes from any *other* decks with this tag to this deck
+          superset(col, deckname, tag)
+      if dosubset:
+          # now, delete any notes in deck that do *not* have this tag
+          subset(col, deckname, tag)
+      # now, delete this tag from these cards (no other cards should have this tag)
+      if dosuperset | dosubset:
+          removetag(col, tag)
+      # done!
 
   # http://ankisrs.net/docs/addons.html#the-database
   def main():
@@ -735,13 +772,15 @@ search a given deck
                           help="ensure the Anki deck is a supeRset of the input file")
       parser.add_argument("-B", "--subset", action="store_true", default=False,
                           help="ensure the Anki deck is a suBset of the input file")
+      parser.add_argument("-m", "--mapping", action='store', default=None,
+                          help="expected mapping of fields, e.g., '[front,back,tag]'")
       parser.add_argument("inputfile", type=str)
 
       args, ankipath = myparse(parser)
 
       ifilepath = abspath(args.inputfile)
       with collection_guard(ankipath) as cg:
-          doimport(cg.col, args.deckname, ifilepath,
+          doimport(cg.col, args.deckname, ifilepath, str2list(args.mapping),
                    dosubset=args.subset, dosuperset=args.superset)
           cg.commit()
 
