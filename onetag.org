@@ -551,6 +551,8 @@ search a given deck
   # cancel (returns True or False); a second shows the results of the
   # import, allows one to accept or abort (returns True or False)
 
+  # XXX allow user to specify expected mapping, abort (with message) if
+  # different; don't query if same
   def showMapping(ti):
       """show the mapping (of note fields to card contents) to the user, giving him/her the opportunity to cancel the import"""
       # from showMapping in aqt/importing.py
@@ -579,6 +581,10 @@ search a given deck
   <<myargsdeck>>
   <<unescape>>
   <<user_interface>>
+
+  def abort():
+      import sys
+      sys.exit(3)
 
   def constag(deckname):
       # https://docs.python.org/2/library/time.html
@@ -614,8 +620,10 @@ search a given deck
           if verbosity:
               print "superset ids: %s" % ids
           print "will move %s cards into deck %s" % (len(ids), deckname)
-          if query_yes_no("proceed with import?", default=None) == 'yes':
-              col.decks.setDeck(ids, did)
+          # XXX allow user to see what cards will be moved
+          if query_yes_no("proceed with import?", default=None) == 'no':
+              abort()
+          col.decks.setDeck(ids, did)
 
   def subset(col, deckname, tag):
       """make sure only cards with tag TAG are in Anki deck DECKNAME"""
@@ -626,9 +634,11 @@ search a given deck
           if verbosity:
               print "subset ids: %s" % ids
           print "will delete %s cards from deck %s" % (len(ids), deckname)
-          if query_yes_no("proceed with import?", default=None) == 'yes':
-              # not sure about notes=True, but it makes sense for how we use it
-              col.remCards(ids, notes=True)
+          # XXX allow user to see what cards will be deleted
+          if query_yes_no("proceed with import?", default=None) == 'no':
+              abort()
+          # not sure about notes=True, but it makes sense for how we use it
+          col.remCards(ids, notes=True)
 
   # get foreign notes: these aren't (yet) real Anki notes, just a
   # represenation that has been read in.
