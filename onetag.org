@@ -656,6 +656,7 @@ search a given deck
   def doimport(col, deckname, ifilepath, dosubset, dosuperset):
       tag = constag(deckname)     # just run once!
       ti = TextImporter(col, ifilepath)
+      ti.allowHTML = True
       ti.initMapping();
       if showMapping(ti):     # allow user to abort
           # first, get anki read in the notes (to an intermediate form)
