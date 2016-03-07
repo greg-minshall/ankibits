@@ -613,9 +613,9 @@ search a given deck
       if ids:
           if verbosity:
               print "superset ids: %s" % ids
-              print "will move %s cards into deck %s" % (len(ids), deckname)
-              if query_yes_no("proceed with import?", default=None) == 'yes':
-                  col.decks.setDeck(ids, did)
+          print "will move %s cards into deck %s" % (len(ids), deckname)
+          if query_yes_no("proceed with import?", default=None) == 'yes':
+              col.decks.setDeck(ids, did)
 
   def subset(col, deckname, tag):
       """make sure only cards with tag TAG are in Anki deck DECKNAME"""
@@ -625,10 +625,10 @@ search a given deck
       if ids:
           if verbosity:
               print "subset ids: %s" % ids
-              print "will delete %s cards from deck %s" % (len(ids), deckname)
-              if query_yes_no("proceed with import?", default=None) == 'yes':
-                  col.remCards(ids, notes=True) # not sure about notes=True,
-                                                # but it makes sense for how we use it
+          print "will delete %s cards from deck %s" % (len(ids), deckname)
+          if query_yes_no("proceed with import?", default=None) == 'yes':
+              # not sure about notes=True, but it makes sense for how we use it
+              col.remCards(ids, notes=True)
 
   # get foreign notes: these aren't (yet) real Anki notes, just a
   # represenation that has been read in.
@@ -667,7 +667,6 @@ search a given deck
           if ti.log:
               for txt in ti.log:
                   print unescape(txt)
-          imported = ti._ids      # cards that were imported
           del ti;                 # no longer to be used
           if dosuperset:
               # now, move any notes from any *other* decks with this tag to this deck
