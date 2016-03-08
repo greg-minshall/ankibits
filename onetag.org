@@ -748,9 +748,10 @@ search a given deck
       if ti.log:
           # XXX don't print out all those lines; summarize (print
           # out first 3 lines), give option for paging through
-          # everything
+          # everything (though, --logfilter helps)
           for txt in ti.log:
-              print unescape(txt)
+              if not logfilterpattern.search(txt):
+                  print unescape(txt)
       del ti;                 # no longer to be used
       if dosuperset:
           # now, move any notes from any *other* decks with this tag to this deck
@@ -765,7 +766,8 @@ search a given deck
 
   # http://ankisrs.net/docs/addons.html#the-database
   def main():
-      global verbosity
+      import re
+      global args, verbosity, logfilterpattern
       parser = argparse.ArgumentParser(parents=[myargsdeck()],
                   description="import an HTML file into a deck in an Anki collection")
       parser.add_argument("-R", "--superset", action="store_true", default=False,
@@ -774,9 +776,19 @@ search a given deck
                           help="ensure the Anki deck is a suBset of the input file")
       parser.add_argument("-m", "--mapping", action='store', default=None,
                           help="expected mapping of fields, e.g., '[front,back,tag]'")
+      parser.add_argument("--logfilter", action='store',
+                          default="First field matched",
+                          help="regular expression of messages to *not* write to log")
       parser.add_argument("inputfile", type=str)
 
       args, ankipath = myparse(parser)
+
+      # https://wiki.python.org/moin/HandlingExceptions
+      try:
+          logfilterpattern = re.compile(args.logfilter)
+      except:
+          print "invalid regular expression in \"--logfilter %s\"" % args.logfilter
+          abort()
 
       ifilepath = abspath(args.inputfile)
       with collection_guard(ankipath) as cg:
