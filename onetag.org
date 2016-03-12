@@ -693,6 +693,7 @@ search a given deck
   from anki.tags import TagManager
 
   <<abspath>>
+  <<cards>>
   <<collection_guard>>
   <<myargsdeck>>
   <<unescape>>
@@ -710,6 +711,14 @@ search a given deck
           return singular
       else:
           return plural
+
+  def logcards(col, why, prefix, ids):
+      """send a list of cards (given by IDS) to the log; WHY is text explaining why"""
+      if logfile:
+          # http://stackoverflow.com/q/1987626
+          print >> logfile, why
+          for id in ids:
+              print >> logfile, "%s%s" % (prefix, fcard(col, id))
 
   # XXX XXX XXX
   # tags with time, etc., on them are maybe useful for debugging,
@@ -761,6 +770,7 @@ search a given deck
           # XXX allow user to see what cards will be moved
           if query_yes_no("proceed with import?", default=None) == 'no':
               abort()
+          logcards(col, "cards moved to deck %s" % deckname, "  ", ids)
           col.decks.setDeck(ids, did)
 
   def subset(col, deckname, tag):
@@ -777,6 +787,7 @@ search a given deck
           # XXX allow user to see what cards will be deleted
           if query_yes_no("proceed with import?", default=None) == 'no':
               abort()
+          logcards(col, "cards deleted from deck %s" % deckname, "  ", ids)
           # not sure about notes=True, but it makes sense for how we use it
           col.remCards(ids, notes=True)
 
@@ -825,7 +836,7 @@ search a given deck
                   utxt = unescape(txt)
                   print utxt
                   if logfile:
-                      print(utxt, file=logfile)
+                      print >> logfile, utxt
       del ti;                 # no longer to be used
       if dosuperset:
           # now, move any notes from any *other* decks with this tag to this deck
@@ -854,10 +865,12 @@ search a given deck
                           default="First field matched",
                           help="regular expression of messages to *not* write to log")
       parser.add_argument("-l", "--logfile", type=argparse.FileType('a'), default=None,
-                          help="logfile for import (appended)")
+                          help="file in which to log actions during import (appended)")
       parser.add_argument("inputfile", type=str)
 
       args, ankipath = myparse(parser)
+
+      logfile = args.logfile
 
       # https://wiki.python.org/moin/HandlingExceptions
       try:
