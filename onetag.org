@@ -421,6 +421,47 @@ is the pathname where Anki collections are stored.
       main()
 #+END_SRC
 
+*** ankicards [--user username] [--path pathname]
+
+list out the notes from a given deck (the name of which is required).
+
+#+name: cards
+#+BEGIN_SRC python :results silent :noweb yes
+  from anki import Collection
+
+  <<unescape>>
+  
+  def pnotes(col, deckname):
+      ids = col.findCards("deck:%s" % deckname)
+      if verbosity:
+          print ids;
+      for i, id in enumerate(ids):
+          card = col.getCard(id)
+          note = card.note()
+          values = note.values()
+          print unescape("%s\t%s" % (values[0], values[1]))
+          print card
+#+END_SRC
+
+#+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankicards :shebang "#!/usr/bin/env python"
+  <<collection_guard>>
+  <<myargsdeck>>
+  <<cards>>
+
+  def main():
+      global verbosity
+      parser = argparse.ArgumentParser(parents=[myargsdeck()],
+                  description="list the notes in one deck in an Anki collection")
+      args, ankipath = myparse(parser)
+
+      with collection_guard(ankipath) as cg:
+          pnotes(cg.col, args.deckname)
+          cg.commit()
+
+  if __name__ == "__main__":
+      main()
+#+END_SRC
+
 *** ankinotes [--user username] [--path pathname] [{-d|--deck} deckname]
 
 list out the notes from a given deck (the name of which is required).
@@ -640,9 +681,18 @@ search a given deck
   <<unescape>>
   <<user_interface>>
 
-  def abort():
+  def abort(rc=3):
       import sys
-      sys.exit(3)
+      sys.exit(rc)
+
+  # the official ternary operator
+  # http://stackoverflow.com/a/394814
+  # is too ugly
+  def plurality(n, singular, plural):
+      if abs(n) == 1:
+          return singular
+      else:
+          return plural
 
   # XXX XXX XXX
   # tags with time, etc., on them are maybe useful for debugging,
@@ -688,7 +738,9 @@ search a given deck
       if ids:
           if verbosity:
               print "superset ids: %s" % ids
-          print "will move %s cards into deck %s" % (len(ids), deckname)
+          n = len(ids)
+          print "will move %s %s into deck %s" % \
+              (n, plurality(len(ids),"card", "cards"), deckname)
           # XXX allow user to see what cards will be moved
           if query_yes_no("proceed with import?", default=None) == 'no':
               abort()
@@ -702,7 +754,9 @@ search a given deck
       if ids:
           if verbosity:
               print "subset ids: %s" % ids
-          print "will delete %s cards from deck %s" % (len(ids), deckname)
+          n = len(ids)
+          print "will delete %s %s from deck %s" % \
+              (n, plurality(len(ids),"card", "cards"), deckname)
           # XXX allow user to see what cards will be deleted
           if query_yes_no("proceed with import?", default=None) == 'no':
               abort()
