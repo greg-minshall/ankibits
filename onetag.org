@@ -430,17 +430,34 @@ list out the notes from a given deck (the name of which is required).
   from anki import Collection
 
   <<unescape>>
-  
+
+  def fcard(col, id):
+      card = col.getCard(id)
+      if verbosity:
+          print card
+      card = col.getCard(id)
+      note = card.note()
+      values = note.values()
+      # http://stackoverflow.com/a/60211
+      type = { 0: "new", 
+               1: "learning",
+               2: "due" }[card.type]
+      # only print queue if different from card type (above)
+      queue = { -3: "/sched-buried",
+                -2: "/user-buried",
+                -1: "/suspended",
+                0: "",
+                1: "",
+                2: "" }[card.queue]
+      due = card.due
+      return "%s%s/%s: %s" % (type, queue, due, unescape("%s\t%s" % (values[0], values[1])))
+
   def pnotes(col, deckname):
       ids = col.findCards("deck:%s" % deckname)
       if verbosity:
           print ids;
       for i, id in enumerate(ids):
-          card = col.getCard(id)
-          note = card.note()
-          values = note.values()
-          print unescape("%s\t%s" % (values[0], values[1]))
-          print card
+          print fcard(col, id)
 #+END_SRC
 
 #+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankicards :shebang "#!/usr/bin/env python"
@@ -805,7 +822,10 @@ search a given deck
           # everything (though, --logfilter helps)
           for txt in ti.log:
               if not logfilterpattern.search(txt):
-                  print unescape(txt)
+                  utxt = unescape(txt)
+                  print utxt
+                  if logfile:
+                      print(utxt, file=logfile)
       del ti;                 # no longer to be used
       if dosuperset:
           # now, move any notes from any *other* decks with this tag to this deck
@@ -821,7 +841,7 @@ search a given deck
   # http://ankisrs.net/docs/addons.html#the-database
   def main():
       import re
-      global args, verbosity, logfilterpattern
+      global args, verbosity, logfilterpattern, logfile
       parser = argparse.ArgumentParser(parents=[myargsdeck()],
                   description="import an HTML file into a deck in an Anki collection")
       parser.add_argument("-R", "--superset", action="store_true", default=False,
@@ -833,6 +853,8 @@ search a given deck
       parser.add_argument("--logfilter", action='store',
                           default="First field matched",
                           help="regular expression of messages to *not* write to log")
+      parser.add_argument("-l", "--logfile", type=argparse.FileType('a'), default=None,
+                          help="logfile for import (appended)")
       parser.add_argument("inputfile", type=str)
 
       args, ankipath = myparse(parser)
