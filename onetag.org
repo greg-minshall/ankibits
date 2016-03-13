@@ -222,7 +222,7 @@ to generally change the encoding of standard out.
 #+BEGIN_SRC python :session ps :results silent
   # from http://code.activestate.com/recipes/577058/
 
-  def query_yes_no(question, default="yes"):
+  def query_yes_no(question, default="yes", help=None, helparg1=None, helparg2=None):
       import sys
       """Ask a yes/no question via raw_input() and return their answer.
 
@@ -235,14 +235,18 @@ to generally change the encoding of standard out.
       """
       valid = {"yes":"yes",   "y":"yes",  "ye":"yes",
                "no":"no",     "n":"no"}
-      if default == None:
-          prompt = " [y/n] "
-      elif default == "yes":
-          prompt = " [Y/n] "
+      nprompt = "n"
+      yprompt = "y"
+      qprompt = ""
+      if help:
+          qprompt = "/?"
+      if default == "yes":
+          yprompt = "Y"
       elif default == "no":
-          prompt = " [y/N] "
-      else:
+          nprompt = "N"
+      elif default != None:
           raise ValueError("invalid default answer: '%s'" % default)
+      prompt = " [%s/%s%s] " % (yprompt, nprompt, qprompt)
       # for some reason, a blank line here generates an error
       while 1:
           sys.stdout.write(question + prompt)
@@ -252,8 +256,10 @@ to generally change the encoding of standard out.
               return default
           elif choice in valid.keys():
               return valid[choice]
-          else:
-              sys.stdout.write("Please respond with 'yes' or 'no' "\
+          elif choice == "?":
+              if help:
+                  help(helparg1, helparg2) # yuck
+          sys.stdout.write("Please respond with 'yes' or 'no' "\
                                "(or 'y' or 'n').\n")
 #+END_SRC
 
@@ -452,14 +458,17 @@ list out the notes from a given deck (the name of which is required).
                 1: "",
                 2: "" }[card.queue]
       due = card.due
-      return "%s%s/%s: %s" % (type, queue, due, unescape("%s\t%s" % (values[0], values[1])))
+      return "%s%s/%s: %s" % (type, queue, due,
+                              unescape("%s\t%s" % (values[0], values[1])))
 
-  def pcards(col, deckname):
-      ids = col.findCards("deck:%s" % deckname)
+  def pcards(col, ids):
       if debugging:
           print ids
       for i, id in enumerate(ids):
           print fcard(col, id)
+
+  def dopcards(col, deckname):
+      pcardsbyid(col, col.findCards("deck:%s" % deckname))
 #+END_SRC
 
 #+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankicards :shebang "#!/usr/bin/env python"
@@ -473,7 +482,7 @@ list out the notes from a given deck (the name of which is required).
       args, ankipath = myparse(parser)
 
       with collection_guard(ankipath) as cg:
-          pcards(cg.col, args.deckname)
+          dopcards(cg.col, args.deckname)
           cg.commit()
 
   if __name__ == "__main__":
@@ -764,7 +773,8 @@ search a given deck
           print "will move %s %s into deck %s" % \
               (n, plurality(len(ids),"card", "cards"), deckname)
           # XXX allow user to see what cards will be moved
-          if query_yes_no("proceed with import?", default=None) == 'no':
+          if query_yes_no("proceed with import?", default=None,
+                          help=pcards, helparg1=col, helparg2=ids) == 'no':
               abort()
           logcards(col, "cards moved to deck %s" % deckname, "  ", ids)
           col.decks.setDeck(ids, did)
@@ -781,7 +791,8 @@ search a given deck
           print "will delete %s %s from deck %s" % \
               (n, plurality(len(ids),"card", "cards"), deckname)
           # XXX allow user to see what cards will be deleted
-          if query_yes_no("proceed with import?", default=None) == 'no':
+          if query_yes_no("proceed with import?", default=None,
+                          help=pcards, helparg1=col, helparg2=ids) == 'no':
               abort()
           logcards(col, "cards deleted from deck %s" % deckname, "  ", ids)
           # not sure about notes=True, but it makes sense for how we use it
