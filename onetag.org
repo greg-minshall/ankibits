@@ -166,15 +166,15 @@ from http://effbot.org/zone/python-with-statement.htm
 #+BEGIN_SRC python :results silent
   class collection_guard:
       def __init__(self, ankipath):
-          self.ankipath = ankipath;
+          self.ankipath = ankipath
       def __enter__(self):
-          self.col = Collection(self.ankipath);
-          return self;
+          self.col = Collection(self.ankipath)
+          return self
       def __exit__(self, type, value, traceback):
           # the protocol is, do a commit() *before* exiting
-          self.undo();
+          self.undo()
           if self.col is not None:
-              self.col.close();
+              self.col.close()
               self.col = None
           return False
       def undo(self):            # we're unhappy, so undo() our progress
@@ -442,7 +442,7 @@ list out the notes from a given deck (the name of which is required).
       note = card.note()
       values = note.values()
       # http://stackoverflow.com/a/60211
-      type = { 0: "new", 
+      type = { 0: "new",
                1: "learning",
                2: "due" }[card.type]
       # only print queue if different from card type (above)
@@ -458,7 +458,7 @@ list out the notes from a given deck (the name of which is required).
   def pcards(col, deckname):
       ids = col.findCards("deck:%s" % deckname)
       if debugging:
-          print ids;
+          print ids
       for i, id in enumerate(ids):
           print fcard(col, id)
 #+END_SRC
@@ -494,7 +494,7 @@ list out the notes from a given deck (the name of which is required).
   def pnotes(col, deckname):
       ids = col.findNotes("deck:%s" % deckname)
       if debugging:
-          print ids;
+          print ids
       for i, id in enumerate(ids):
           note = col.getNote(id)
           values = note.values()
@@ -531,7 +531,7 @@ notes with each tag.
   def ptags(col, deckname):
       ids = col.findNotes("deck:%s" % deckname)
       if debugging:
-          print ids;
+          print ids
       # https://docs.python.org/2/library/stdtypes.html#dict
       tags = dict()
       for i, id in enumerate(ids):
@@ -583,7 +583,7 @@ search a given deck
       ids = []
       ids = col.findNotes("".join(["deck:", deckname, " ", query]))
       if debugging:
-          print ids;
+          print ids
       for i, id in enumerate(ids):
           note = col.getNote(id)
           values = note.values()
@@ -608,7 +608,7 @@ search a given deck
       if ('query' not in args) | (not args.query):
           print "required 'query' term missing"
           parser.print_usage()
-          sys.exit();
+          sys.exit()
 
       with collection_guard(ankipath) as cg:
           psearch(cg.col, args.deckname, " ".join(args.query))
@@ -659,7 +659,7 @@ search a given deck
           mapping = []            # build up the actual mapping
           for num in range(len(ti.mapping)):
               if ti.mapping[num] == '_tags':
-                  mapping = mapping + ['tags'];
+                  mapping = mapping + ['tags']
               elif ti.mapping[num]:
                   mapping = mapping + [ti.mapping[num].lower()]
               else:
@@ -686,10 +686,8 @@ search a given deck
 
 #+name: import
 #+BEGIN_SRC python :noweb yes :tangle ankiimport :shebang "#!/usr/bin/env python"
-  import argparse
   from anki import Collection
   from anki.importing import TextImporter
-  from anki.tags import TagManager
 
   <<abspath>>
   <<cards>>
@@ -794,8 +792,8 @@ search a given deck
   # represenation that has been read in.
   def getfnotes(ti):
       # now, get the notes
-      fnotes = ti.foreignNotes();
-      return fnotes;
+      fnotes = ti.foreignNotes()
+      return fnotes
 
   def addtag(ti, fnotes, tag):
       for i, fn in enumerate(fnotes):
@@ -817,7 +815,7 @@ search a given deck
       tag = constag(deckname)     # just run once!
       ti = TextImporter(col, ifilepath)
       ti.allowHTML = True
-      ti.initMapping();
+      ti.initMapping()
       checkmapping(ti, mapping)    # this may abort
       # first, get anki read in the notes (to an intermediate form)
       fnotes = getfnotes(ti)
@@ -836,7 +834,7 @@ search a given deck
                   print utxt
                   if logfile:
                       print >> logfile, utxt
-      del ti;                 # no longer to be used
+      del ti                      # no longer to be used
       if dosuperset:
           # now, move any notes from any *other* decks with this tag to this deck
           superset(col, deckname, tag)
