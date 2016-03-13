@@ -312,8 +312,7 @@ to generally change the encoding of standard out.
       parser.add_argument("-u", "--user", action="store",
                           default="User 1", metavar="username",
                           help="Anki username of collection")
-      parser.add_argument("-d", "--debugging", action="count",
-                          default=0,
+      parser.add_argument("--debugging", action="count", default=0,
                           help="increase level of (debugging) verbosity")
       parser.add_argument("-v", "--verbosity", action="count",
                           default=0,
