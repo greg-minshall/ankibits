@@ -272,10 +272,11 @@ to generally change the encoding of standard out.
       import codecs
       import sys
 
-      global debugging
+      global debugging, verbosity
 
       args = parser.parse_args(argv)
       debugging = args.debugging
+      verbosity = args.verbosity
 
       if debugging > 1:
           print args
@@ -314,6 +315,9 @@ to generally change the encoding of standard out.
       parser.add_argument("-d", "--debugging", action="count",
                           default=0,
                           help="increase level of (debugging) verbosity")
+      parser.add_argument("-v", "--verbosity", action="count",
+                          default=0,
+                          help="increase level of verbosity")
       return parser
 
   # for convenience
@@ -451,7 +455,7 @@ list out the notes from a given deck (the name of which is required).
       due = card.due
       return "%s%s/%s: %s" % (type, queue, due, unescape("%s\t%s" % (values[0], values[1])))
 
-  def pnotes(col, deckname):
+  def pcards(col, deckname):
       ids = col.findCards("deck:%s" % deckname)
       if debugging:
           print ids;
@@ -470,7 +474,7 @@ list out the notes from a given deck (the name of which is required).
       args, ankipath = myparse(parser)
 
       with collection_guard(ankipath) as cg:
-          pnotes(cg.col, args.deckname)
+          pcards(cg.col, args.deckname)
           cg.commit()
 
   if __name__ == "__main__":
