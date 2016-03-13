@@ -272,16 +272,16 @@ to generally change the encoding of standard out.
       import codecs
       import sys
 
-      global verbosity
+      global debugging
 
       args = parser.parse_args(argv)
-      verbosity = args.verbosity
+      debugging = args.debugging
 
-      if verbosity > 1:
+      if debugging > 1:
           print args
 
       ankipath = consankipath(args.path, args.user)
-      if verbosity:
+      if debugging:
           print ankipath
 
       # dir(): http://stackoverflow.com/a/191029
@@ -311,7 +311,7 @@ to generally change the encoding of standard out.
       parser.add_argument("-u", "--user", action="store",
                           default="User 1", metavar="username",
                           help="Anki username of collection")
-      parser.add_argument("-v", "--verbosity", action="count",
+      parser.add_argument("-d", "--debugging", action="count",
                           default=0,
                           help="increase level of (debugging) verbosity")
       return parser
@@ -341,7 +341,7 @@ to generally change the encoding of standard out.
       unexpandedpath = ''.join([path, '/', user, '/', 'collection.anki2'])
       # https://docs.python.org/2/library/os.path.html#os.path.expanduser
       ankipath = os.path.expanduser(os.path.expandvars(unexpandedpath))
-      if verbosity:
+      if debugging:
           print ankipath
       return ankipath
 #+END_SRC
@@ -407,7 +407,6 @@ is the pathname where Anki collections are stored.
 
   def main():
       # scope rules (LEGB): http://stackoverflow.com/a/292502
-      global verbosity
       parser = argparse.ArgumentParser(description=
                                        "list the decks in an Anki collection",
                                        parents=[myargs()])
@@ -433,7 +432,7 @@ list out the notes from a given deck (the name of which is required).
 
   def fcard(col, id):
       card = col.getCard(id)
-      if verbosity:
+      if debugging:
           print card
       card = col.getCard(id)
       note = card.note()
@@ -454,7 +453,7 @@ list out the notes from a given deck (the name of which is required).
 
   def pnotes(col, deckname):
       ids = col.findCards("deck:%s" % deckname)
-      if verbosity:
+      if debugging:
           print ids;
       for i, id in enumerate(ids):
           print fcard(col, id)
@@ -466,7 +465,6 @@ list out the notes from a given deck (the name of which is required).
   <<cards>>
 
   def main():
-      global verbosity
       parser = argparse.ArgumentParser(parents=[myargsdeck()],
                   description="list the notes in one deck in an Anki collection")
       args, ankipath = myparse(parser)
@@ -491,7 +489,7 @@ list out the notes from a given deck (the name of which is required).
   
   def pnotes(col, deckname):
       ids = col.findNotes("deck:%s" % deckname)
-      if verbosity:
+      if debugging:
           print ids;
       for i, id in enumerate(ids):
           note = col.getNote(id)
@@ -505,7 +503,6 @@ list out the notes from a given deck (the name of which is required).
   <<notes>>
 
   def main():
-      global verbosity
       parser = argparse.ArgumentParser(parents=[myargsdeck()],
                   description="list the notes in one deck in an Anki collection")
       args, ankipath = myparse(parser)
@@ -529,16 +526,16 @@ notes with each tag.
 
   def ptags(col, deckname):
       ids = col.findNotes("deck:%s" % deckname)
-      if verbosity:
+      if debugging:
           print ids;
       # https://docs.python.org/2/library/stdtypes.html#dict
       tags = dict()
       for i, id in enumerate(ids):
           note = col.getNote(id)
-          if verbosity:
+          if debugging:
               print note.stringTags()
           for s in note.stringTags().split():
-              if verbosity:
+              if debugging:
                   print s
               # "s not in tags": http://stackoverflow.com/a/18300596
               if s not in tags:
@@ -555,7 +552,6 @@ notes with each tag.
   <<tags>>
 
   def main():
-      global verbosity
       parser = argparse.ArgumentParser(parents=[myargsdeck()],
                   description="list the notes in one deck in an Anki collection")
       args, ankipath = myparse(parser)
@@ -582,7 +578,7 @@ search a given deck
   def psearch(col, deckname, query):
       ids = []
       ids = col.findNotes("".join(["deck:", deckname, " ", query]))
-      if verbosity:
+      if debugging:
           print ids;
       for i, id in enumerate(ids):
           note = col.getNote(id)
@@ -598,7 +594,6 @@ search a given deck
   <<search>>
 
   def main():
-      global verbosity
       parser = argparse.ArgumentParser(parents=[myargsdeck()],
                       description="search the notes in one deck in an Anki collection")
       parser.add_argument("query", nargs=argparse.REMAINDER, action="store",
@@ -634,7 +629,7 @@ search a given deck
           # make sure this looks good
           if re.match('\A\[[\w,]+\]\Z', expected):
               list = re.split('[\[\],]', expected)[1:-1]
-              if verbosity:
+              if debugging:
                   print "str2list(%s) returns %s" % (expected, list)
               return list
       return expected             # i.e., None
@@ -736,7 +731,7 @@ search a given deck
       import time
       secs = int(time.time())
       tag = "deck-%s-%s" % (deckname, secs)
-      if verbosity:
+      if debugging:
           print "tag %s" % tag
       return tag
 
@@ -745,15 +740,15 @@ search a given deck
       # (above) https://www.python.org/dev/peps/pep-0257/
       ids = []
       ids = col.findNotes("tag:%s" % tag)
-      if verbosity:
+      if debugging:
           print "ids of notes with tag %s: %s" % (tag, ids)
       for i, id in enumerate(ids):
           note = col.getNote(id)
-          if verbosity > 2:
+          if debugging > 2:
               print "%s %s//%s" % (id, note, note.tags)
           note.delTag(tag)
           note.flush()
-          if verbosity > 2:
+          if debugging > 2:
               print "%s %s//%s" % (id, note, note.tags)
 
   def superset(col, deckname, tag):
@@ -762,7 +757,7 @@ search a given deck
       ids = []
       ids = col.findCards("-deck:%s tag:%s" % (deckname, tag))
       if ids:
-          if verbosity:
+          if debugging:
               print "superset ids: %s" % ids
           n = len(ids)
           print "will move %s %s into deck %s" % \
@@ -779,7 +774,7 @@ search a given deck
       ids = []
       ids = col.findCards("deck:%s -tag:%s" % (deckname, tag))
       if ids:
-          if verbosity:
+          if debugging:
               print "subset ids: %s" % ids
           n = len(ids)
           print "will delete %s %s from deck %s" % \
@@ -806,7 +801,7 @@ search a given deck
       # XXX should we remember previously selected deck (and reselect it
       # when we're done here)?
       did = col.decks.byName(deckname)['id']
-      if verbosity:
+      if debugging:
           print "did %s" % did
       if did != ti.model['did']:
           ti.model['did'] = did
@@ -851,8 +846,12 @@ search a given deck
 
   # http://ankisrs.net/docs/addons.html#the-database
   def main():
+      import codecs
       import re
-      global args, verbosity, logfilterpattern, logfile
+      import time
+
+      global args, logfilterpattern, logfile
+
       parser = argparse.ArgumentParser(parents=[myargsdeck()],
                   description="import an HTML file into a deck in an Anki collection")
       parser.add_argument("-R", "--superset", action="store_true", default=False,
@@ -870,7 +869,10 @@ search a given deck
 
       args, ankipath = myparse(parser)
 
-      logfile = args.logfile
+      if args.logfile:
+          logfile = codecs.getwriter('utf-8')(args.logfile)
+          print >> logfile, "import started %s" % time.strftime("%x %X")
+          print >> logfile, "arguments: %s" % args
 
       # https://wiki.python.org/moin/HandlingExceptions
       try:
