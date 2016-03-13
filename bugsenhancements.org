@@ -1,0 +1,53 @@
+* bugs and enhancements
+
+** bugs
+
+*** TODO "ankiimport -RB" puts (some) cards back in "new" state
+
+somehow, some cards are ending up back in new state.  maybe half?
+
+so, turkish-2016 is the deck in question.  it has 214 new cards (mac
+version).
+
+this [[file:before.mobile.review.txt][file]] shows state before reviewing, synching from mobile.
+
+now, synch from mobile.  launch anki.  it says 104 new cards.  [[file:after.mobile.review.txt][here]] is
+the state after that synch, launching (and quitting!) of anki.
+
+now, create a new HTML file, and use ankiimport to import it, but
+don't yet launch anki.
+#+BEGIN_EXAMPLE
+bash greg-minshalls-mbp-2: {1203} date; i=turkish-2016; ./genhtml-bothsides.sh -t $i.txt >| $i.html
+Sun Mar 13 09:58:05 EET 2016
+bash greg-minshalls-mbp-2: {1204} ./import.sh -RB turkish-2016
+1 note added, 525 notes updated, 0 notes unchanged.
+will delete 1 card from deck turkish-2016
+proceed with import? [y/n] y
+#+END_EXAMPLE
+
+[[file:after.mobile.review.ankiimport.txt][here]] is the state there.  it differs in the
+"due" field, but not much else:
+#+BEGIN_SRC sh :results raw
+sed 'sX^new/[0-9]*:Xnew/:X' after.mobile.review.ankiimport.txt > y
+sed 'sX^new/[0-9]*:Xnew/:X' after.mobile.review.txt > z
+diff y z | less
+#+END_SRC
+
+#+RESULTS:
+294a295
+> due/1053: <div align="center">canvas (for painting)</div>	<div align="center">tuval</div>
+526d526
+< new/: <div align="center">canvass (for painting)</div>	<div align="center">tuval</div>
+
+now, launch anki.  it says 105 cards.  [[file:after.mobile.review.ankiimport.anki.txt][here]] is the output.
+#+BEGIN_SRC sh :results raw
+sed 'sX^new/[0-9]*:Xnew/:X' after.mobile.review.ankiimport.txt > y
+sed 'sX^new/[0-9]*:Xnew/:X' after.mobile.review.ankiimport.anki.txt > z
+diff y z | less
+#+END_SRC
+
+#+RESULTS:
+
+no change.  hmm.  download to mobile.  mobile shows 105 cards left.
+
+so, this didn't repeat the problem.
