@@ -50,4 +50,21 @@ diff y z | less
 
 no change.  hmm.  download to mobile.  mobile shows 105 cards left.
 
-so, this didn't repeat the problem.
+so, this didn't repeat the problem.  sigh.
+
+14.03.2016 -- importing into my normal, it happened again that a
+number 
+
+my sequence was to run ankiimport *before* synching with ankiweb.
+it's possible that what's happening is that the cards i reviewed
+*today*, having been marked updated, are not going to later be updated
+by synching with ankiweb (when i actually launch Anki).
+
+but, e.g.,
+----
+okur | reader
+----
+(from 08.03.2016) is marked "new".  it wouldn't be new.
+
+instrument ~/docs/mine/flashcards/import shellscript to log "^new"
+before and after import.
