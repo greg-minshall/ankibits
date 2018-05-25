@@ -787,6 +787,7 @@ search a given deck
               abort()
           logcards(col, "cards moved to deck %s" % deckname, "  ", ids)
           col.decks.setDeck(ids, did)
+          col.sched.resetCards(ids)
 
   def subset(col, deckname, tag):
       """make sure only cards with tag TAG are in Anki deck DECKNAME"""
