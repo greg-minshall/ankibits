@@ -68,3 +68,49 @@ okur | reader
 
 instrument ~/docs/mine/flashcards/import shellscript to log "^new"
 before and after import.
+
+well, actually, in yesterday's example, okur was included as "new".
+
+#+name: newcards
+#+BEGIN_SRC sh :results raw
+./ankicards --user User\ 1 --deck turkish-2016 | grep ^new
+#+END_SRC
+
+so, after reviewing everything on iphone, and synching from iphone,
+then launching and closing anki, *no* new cards remain:
+#+call: newcards()
+
+#+RESULTS:
+: nil
+
+run ./import in flashcards.  still no new cards
+#+call: newcards()
+
+#+RESULTS:
+: nil
+
+on <2016-03-16 Wed> finished reviewing new cards on iphone,
+synchronized from iphone, entered a bunch of new cards on mac, did
+"ankiimport -RB ..." on mac, *then* launched Anki on mac.  at end of
+this, the "new" cards i had read on the iphone were *still* marked
+new.  maybe that's what happens?  i.e., the -RB load says "this is
+recently changed", so then the "new --> old" on the iphone-reviewed
+cards is ignored?
+
+that seemed to happen again (same schedule of actions) on
+<2016-03-17 Thu>.
+
+*** TODO on getting imaret wrong ( right w/have been 10.1 mos), "leeched".
+
+i had just moved it to this deck.
+
+
+** enhancements
+
+*** when moving old cards in to new place, mark as "new"?
+
+or maybe an algorithm to "age" unreviewed cards?
+
+problem being, that when cards are moved from an old deck, after
+answering the first time, assuming the answer is correct, they go back
+to "8.7 months", or some such.
