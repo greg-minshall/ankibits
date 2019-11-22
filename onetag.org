@@ -80,6 +80,9 @@ deck['mod'] = m['mod']
   appears) whichever deck was most recently "selected".  here's (more
   or less) DAE's example:
 #+BEGIN_SRC python :session ps :var TEXT_FILE_PATH="/Users/minshall/src/mine/ankiplugins/test.html" :var COLLECTION_FILE_PATH=anki2 :var DECK_NAME=deckname
+  import sys
+  sys.path.append("/usr/share/anki")
+
   from anki import Collection
   from anki.importing import TextImporter
   file = TEXT_FILE_PATH
@@ -209,10 +212,7 @@ to generally change the encoding of standard out.
   try:
       from html import unescape  # python 3.4+
   except ImportError:
-      try:
-          from html.parser import HTMLParser  # python 3.x (<3.4)
-      except ImportError:
-          from HTMLParser import HTMLParser  # python 2.x
+      from html.parser import HTMLParser  # python 3.x (<3.4)
       unescape = HTMLParser().unescape
 #+END_SRC
 
@@ -251,16 +251,16 @@ to generally change the encoding of standard out.
       while 1:
           sys.stdout.write(question + prompt)
           # handle C-c at this point
-          choice = raw_input().lower()
+          choice = input().lower()
           if default is not None and choice == '':
               return default
-          elif choice in valid.keys():
+          elif choice in list(valid.keys()):
               return valid[choice]
           elif choice == "?":
               if helpeval:
                   if debugging:
-                      print "%s (globals=%s)" % (helpeval, helplocals)
-                      print pcards
+                      print("%s (globals=%s)" % (helpeval, helplocals))
+                      print(pcards)
                   eval(helpeval, helplocals)
           sys.stdout.write("Please respond with 'yes' or 'no' "\
                                "(or 'y' or 'n').\n")
@@ -288,18 +288,18 @@ to generally change the encoding of standard out.
       verbosity = args.verbosity
 
       if debugging > 1:
-          print args
+          print(args)
 
       ankipath = consankipath(args.path, args.user)
       if debugging:
-          print ankipath
+          print(ankipath)
 
       # dir(): http://stackoverflow.com/a/191029
       if ('deckname' in dir(args)) & deckmustexist:
           with collection_guard(ankipath) as cg:
               if cg.col.decks.byName(args.deckname) == None:
                   import sys
-                  print "error: deckname %s does not exist" % args.deckname
+                  print("error: deckname %s does not exist" % args.deckname)
                   sys.exit(3)
 
       # sigh.  we *also* make sure stdout uses utf-8 encoding
@@ -354,7 +354,7 @@ to generally change the encoding of standard out.
       # https://docs.python.org/2/library/os.path.html#os.path.expanduser
       ankipath = os.path.expanduser(os.path.expandvars(unexpandedpath))
       if debugging:
-          print ankipath
+          print(ankipath)
       return ankipath
 #+END_SRC
 
@@ -402,15 +402,18 @@ is the pathname where Anki collections are stored.
 
 #+name: decks
 #+BEGIN_SRC python :results silent :noweb yes
+  import sys
+  sys.path.append("/usr/share/anki")
+
   from anki import Collection
 
   def pdecks(col):
       for i, val in enumerate(col.decks.allNames()):
-          print val
+          print(val)
 #+END_SRC
 
 
-#+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankidecks :shebang "#!/usr/bin/env python"
+#+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankidecks :shebang "#!/usr/bin/env python3"
   import argparse
 
   <<collection_guard>>
@@ -438,6 +441,9 @@ list out the notes from a given deck (the name of which is required).
 
 #+name: cards
 #+BEGIN_SRC python :results silent :noweb yes
+  import sys
+  sys.path.append("/usr/share/anki")
+
   from anki import Collection
 
   <<unescape>>
@@ -445,10 +451,10 @@ list out the notes from a given deck (the name of which is required).
   def fcard(col, id, decknamep=False):
       card = col.getCard(id)
       if debugging:
-          print card
+          print(card)
       card = col.getCard(id)
       note = card.note()
-      values = note.values()
+      values = list(note.values())
       # http://stackoverflow.com/a/60211
       type = { 0: "new",
                1: "learning",
@@ -470,15 +476,15 @@ list out the notes from a given deck (the name of which is required).
 
   def pcards(col, ids, decknamep=False):
       if debugging:
-          print ids
+          print(ids)
       for i, id in enumerate(ids):
-          print fcard(col, id, decknamep)
+          print(fcard(col, id, decknamep))
 
   def dopcards(col, deckname, decknamep=False):
       pcards(col, col.findCards("deck:%s" % deckname), decknamep)
 #+END_SRC
 
-#+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankicards :shebang "#!/usr/bin/env python"
+#+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankicards :shebang "#!/usr/bin/env python3"
   <<collection_guard>>
   <<myargsdeck>>
   <<cards>>
@@ -502,6 +508,9 @@ list out the notes from a given deck (the name of which is required).
 
 #+name: notes
 #+BEGIN_SRC python :results silent :noweb yes
+  import sys
+  sys.path.append("/usr/share/anki")
+
   from anki import Collection
 
   <<unescape>>
@@ -509,14 +518,14 @@ list out the notes from a given deck (the name of which is required).
   def pnotes(col, deckname):
       ids = col.findNotes("deck:%s" % deckname)
       if debugging:
-          print ids
+          print(ids)
       for i, id in enumerate(ids):
           note = col.getNote(id)
-          values = note.values()
-          print unescape("%s\t%s" % (values[0], values[1]))
+          values = list(note.values())
+          print(unescape("%s\t%s" % (values[0], values[1])))
 #+END_SRC
 
-#+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankinotes :shebang "#!/usr/bin/env python"
+#+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankinotes :shebang "#!/usr/bin/env python3"
   <<collection_guard>>
   <<myargsdeck>>
   <<notes>>
@@ -541,31 +550,34 @@ notes with each tag.
 
 #+name: tags
 #+BEGIN_SRC python :results silent :noweb yes
+  import sys
+  sys.path.append("/usr/share/anki")
+
   from anki import Collection
 
   def ptags(col, deckname):
       ids = col.findNotes("deck:%s" % deckname)
       if debugging:
-          print ids
+          print(ids)
       # https://docs.python.org/2/library/stdtypes.html#dict
       tags = dict()
       for i, id in enumerate(ids):
           note = col.getNote(id)
           if debugging:
-              print note.stringTags()
+              print(note.stringTags())
           for s in note.stringTags().split():
               if debugging:
-                  print s
+                  print(s)
               # "s not in tags": http://stackoverflow.com/a/18300596
               if s not in tags:
                   tags[s] = 1
               else:
                   tags[s] += 1
       for t in iter(tags):
-          print t, tags[t]
+          print(t, tags[t])
 #+END_SRC
 
-#+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankitags :shebang "#!/usr/bin/env python"
+#+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankitags :shebang "#!/usr/bin/env python3"
   <<collection_guard>>
   <<myargsdeck>>
   <<tags>>
@@ -588,6 +600,9 @@ notes with each tag.
 search a given deck
 #+name: search
 #+BEGIN_SRC python :results silent :noweb yes
+  import sys
+  sys.path.append("/usr/share/anki")
+
   from anki import Collection
 
   <<unescape>>
@@ -598,14 +613,14 @@ search a given deck
       ids = []
       ids = col.findNotes("".join(["deck:", deckname, " ", query]))
       if debugging:
-          print ids
+          print(ids)
       for i, id in enumerate(ids):
           note = col.getNote(id)
-          values = note.values()
-          print unescape("%s\t%s" % (values[0], values[1]))
+          values = list(note.values())
+          print(unescape("%s\t%s" % (values[0], values[1])))
 #+END_SRC
 
-#+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankisearch :shebang "#!/usr/bin/env python"
+#+BEGIN_SRC python :results output :session ps :noweb yes :tangle ankisearch :shebang "#!/usr/bin/env python3"
   import sys
 
   <<collection_guard>>
@@ -621,7 +636,7 @@ search a given deck
       args, ankipath = myparse(parser)
       # "not args.query": http://stackoverflow.com/a/53522
       if ('query' not in args) | (not args.query):
-          print "required 'query' term missing"
+          print("required 'query' term missing")
           parser.print_usage()
           sys.exit()
 
@@ -649,7 +664,7 @@ search a given deck
           if re.match('\A\[[\w,]+\]\Z', expected):
               list = re.split('[\[\],]', expected)[1:-1]
               if debugging:
-                  print "str2list(%s) returns %s" % (expected, list)
+                  print("str2list(%s) returns %s" % (expected, list))
               return list
       return expected             # i.e., None
 
@@ -680,8 +695,8 @@ search a given deck
               else:
                   mapping = mapping + ["ignored"]
           if mapping != expected: # if it doesn't match the expected mapping
-              print "expected mapping (%s) not equal to computed (%s)" % \
-                  (expected, mapping)
+              print("expected mapping (%s) not equal to computed (%s)" % \
+                  (expected, mapping))
               abort()             # abort
       else:
           # from showMapping in aqt/importing.py
@@ -693,14 +708,17 @@ search a given deck
                   where = "mapped to %s" % ti.mapping[num]
               else:
                   where = "<ignored>"
-              print "%s%s" % (intro, where)
+              print("%s%s" % (intro, where))
           if query_yes_no("proceed with import?", default=None) == 'no':
               abort()
 #+END_SRC
 
 
 #+name: import
-#+BEGIN_SRC python :noweb yes :tangle ankiimport :shebang "#!/usr/bin/env python"
+#+BEGIN_SRC python :noweb yes :tangle ankiimport :shebang "#!/usr/bin/env python3"
+  import sys
+  sys.path.append("/usr/share/anki")
+
   from anki import Collection
   from anki.importing import TextImporter
 
@@ -728,9 +746,9 @@ search a given deck
       """send a list of cards (given by IDS) to the log; WHY is text explaining why"""
       if logfile:
           # http://stackoverflow.com/q/1987626
-          print >> logfile, why
+          print(why, file=logfile)
           for id in ids:
-              print >> logfile, "%s%s" % (prefix, fcard(col, id))
+              print("%s%s" % (prefix, fcard(col, id)), file=logfile)
 
   # XXX XXX XXX
   # tags with time, etc., on them are maybe useful for debugging,
@@ -749,7 +767,7 @@ search a given deck
       secs = int(time.time())
       tag = "deck-%s-%s" % (deckname, secs)
       if debugging:
-          print "tag %s" % tag
+          print("tag %s" % tag)
       return tag
 
   def removetag(col, tag):
@@ -758,15 +776,15 @@ search a given deck
       ids = []
       ids = col.findNotes("tag:%s" % tag)
       if debugging:
-          print "ids of notes with tag %s: %s" % (tag, ids)
+          print("ids of notes with tag %s: %s" % (tag, ids))
       for i, id in enumerate(ids):
           note = col.getNote(id)
           if debugging > 2:
-              print "%s %s//%s" % (id, note, note.tags)
+              print("%s %s//%s" % (id, note, note.tags))
           note.delTag(tag)
           note.flush()
           if debugging > 2:
-              print "%s %s//%s" % (id, note, note.tags)
+              print("%s %s//%s" % (id, note, note.tags))
 
   def superset(col, deckname, tag):
       """make sure all cards with tag TAG are in Anki deck DECKNAME"""
@@ -775,10 +793,10 @@ search a given deck
       ids = col.findCards("-deck:%s tag:%s" % (deckname, tag))
       if ids:
           if debugging:
-              print "superset ids: %s" % ids
+              print("superset ids: %s" % ids)
           n = len(ids)
-          print "will move %s %s into deck %s" % \
-              (n, plurality(len(ids),"card", "cards"), deckname)
+          print("will move %s %s into deck %s" % \
+              (n, plurality(len(ids),"card", "cards"), deckname))
           # XXX allow user to see what cards will be moved
           if query_yes_no("proceed with import?", default=None,
                           helpeval="pcards(col, ids, True)",
@@ -796,10 +814,10 @@ search a given deck
       ids = col.findCards("deck:%s -tag:%s" % (deckname, tag))
       if ids:
           if debugging:
-              print "subset ids: %s" % ids
+              print("subset ids: %s" % ids)
           n = len(ids)
-          print "will delete %s %s from deck %s" % \
-              (n, plurality(len(ids),"card", "cards"), deckname)
+          print("will delete %s %s from deck %s" % \
+              (n, plurality(len(ids),"card", "cards"), deckname))
           # XXX allow user to see what cards will be deleted
           if query_yes_no("proceed with import?", default=None,
                           helpeval="pcards(col, ids, False)",
@@ -826,7 +844,7 @@ search a given deck
       # when we're done here)?
       did = col.decks.byName(deckname)['id']
       if debugging:
-          print "did %s" % did
+          print("did %s" % did)
       if did != ti.model['did']:
           ti.model['did'] = did
           col.models.save(ti.model)
@@ -853,9 +871,9 @@ search a given deck
           for txt in ti.log:
               if not logfilterpattern.search(txt):
                   utxt = unescape(txt)
-                  print utxt
+                  print(utxt)
                   if logfile:
-                      print >> logfile, utxt
+                      print(utxt, file=logfile)
       del ti                      # no longer to be used
       if dosuperset:
           # now, move any notes from any *other* decks with this tag to this deck
@@ -895,14 +913,14 @@ search a given deck
 
       if args.logfile:
           logfile = codecs.getwriter('utf-8')(args.logfile)
-          print >> logfile, "import started %s" % time.strftime("%x %X")
-          print >> logfile, "arguments: %s" % args
+          print("import started %s" % time.strftime("%x %X"), file=logfile)
+          print("arguments: %s" % args, file=logfile)
 
       # https://wiki.python.org/moin/HandlingExceptions
       try:
           logfilterpattern = re.compile(args.logfilter)
       except:
-          print "invalid regular expression in \"--logfilter %s\"" % args.logfilter
+          print("invalid regular expression in \"--logfilter %s\"" % args.logfilter)
           abort()
 
       ifilepath = abspath(args.inputfile)
