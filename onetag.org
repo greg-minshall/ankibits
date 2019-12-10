@@ -913,7 +913,8 @@ search a given deck
       args, ankipath = myparse(parser)
 
       if args.logfile:
-          logfile = args.logfile.reconfigure(encoding='utf-8')
+          logfile = args.logfile
+          logfile.reconfigure(encoding='utf-8')
           print("import started %s" % time.strftime("%x %X"), file=logfile)
           print("arguments: %s" % args, file=logfile)
 
