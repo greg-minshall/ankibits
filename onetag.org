@@ -82,6 +82,7 @@ deck['mod'] = m['mod']
 #+BEGIN_SRC python :session ps :var TEXT_FILE_PATH="/Users/minshall/src/mine/ankiplugins/test.html" :var COLLECTION_FILE_PATH=anki2 :var DECK_NAME=deckname
   import sys
   sys.path.append("/usr/share/anki")
+  sys.path.append("/usr/local/share/anki")
 
   from anki import Collection
   from anki.importing import TextImporter
@@ -405,6 +406,7 @@ is the pathname where Anki collections are stored.
 #+BEGIN_SRC python :results silent :noweb yes
   import sys
   sys.path.append("/usr/share/anki")
+  sys.path.append("/usr/local/share/anki")
 
   from anki import Collection
 
@@ -444,6 +446,7 @@ list out the notes from a given deck (the name of which is required).
 #+BEGIN_SRC python :results silent :noweb yes
   import sys
   sys.path.append("/usr/share/anki")
+  sys.path.append("/usr/local/share/anki")
 
   from anki import Collection
 
@@ -511,6 +514,7 @@ list out the notes from a given deck (the name of which is required).
 #+BEGIN_SRC python :results silent :noweb yes
   import sys
   sys.path.append("/usr/share/anki")
+  sys.path.append("/usr/local/share/anki")
 
   from anki import Collection
 
@@ -553,6 +557,7 @@ notes with each tag.
 #+BEGIN_SRC python :results silent :noweb yes
   import sys
   sys.path.append("/usr/share/anki")
+  sys.path.append("/usr/local/share/anki")
 
   from anki import Collection
 
@@ -603,6 +608,7 @@ search a given deck
 #+BEGIN_SRC python :results silent :noweb yes
   import sys
   sys.path.append("/usr/share/anki")
+  sys.path.append("/usr/local/share/anki")
 
   from anki import Collection
 
@@ -719,6 +725,7 @@ search a given deck
 #+BEGIN_SRC python :noweb yes :tangle ankiimport :shebang "#!/usr/bin/env python3"
   import sys
   sys.path.append("/usr/share/anki")
+  sys.path.append("/usr/local/share/anki")
 
   from anki import Collection
   from anki.importing import TextImporter
@@ -751,47 +758,11 @@ search a given deck
           for id in ids:
               print("%s%s" % (prefix, fcard(col, id)), file=logfile)
 
-  # XXX XXX XXX
-  # tags with time, etc., on them are maybe useful for debugging,
-  # but they consume lots of resources (as they cause Anki to say "well,
-  # the entire deck has changed, and therefore upload/download the
-  # entire deck).  ditto for first adding tags to a deck that had no
-  # tags, then deleting all the tags: Anki still considers the entire
-  # deck to have changed, consuming lots of bandwidth.
-  #
-  # one solution would be to name the tag '"deck-%s" % deckname', and
-  # *leave* the tag in the deck.  seems messy, though, having those tags
-  # lying around.
-  def constag(deckname):
-      # https://docs.python.org/2/library/time.html
-      import time
-      secs = int(time.time())
-      tag = "deck-%s-%s" % (deckname, secs)
-      if debugging:
-          print("tag %s" % tag)
-      return tag
-
-  def removetag(col, tag):
-      """remove all instances of a given tag from an Anki collection"""
-      # (above) https://www.python.org/dev/peps/pep-0257/
-      ids = []
-      ids = col.findNotes("tag:%s" % tag)
-      if debugging:
-          print("ids of notes with tag %s: %s" % (tag, ids))
-      for i, id in enumerate(ids):
-          note = col.getNote(id)
-          if debugging > 2:
-              print("%s %s//%s" % (id, note, note.tags))
-          note.delTag(tag)
-          note.flush()
-          if debugging > 2:
-              print("%s %s//%s" % (id, note, note.tags))
-
-  def superset(col, deckname, tag):
-      """make sure all cards with tag TAG are in Anki deck DECKNAME"""
+  def superset(col, deckname, snids):
+      """make sure all cards with ids in IDS are in Anki deck DECKNAME"""
       did = col.decks.byName(deckname)['id']
       ids = []
-      ids = col.findCards("-deck:%s tag:%s" % (deckname, tag))
+      ids = col.findCards("-deck:%s nid:%s" % (deckname, snids))
       if ids:
           if debugging:
               print("superset ids: %s" % ids)
@@ -808,11 +779,11 @@ search a given deck
           col.decks.setDeck(ids, did)
           col.sched.resetCards(ids)
 
-  def subset(col, deckname, tag):
+  def subset(col, deckname, snids):
       """make sure only cards with tag TAG are in Anki deck DECKNAME"""
       # XXX just deletes the cards; nicer might be to stash them somewhere
       ids = []
-      ids = col.findCards("deck:%s -tag:%s" % (deckname, tag))
+      ids = col.findCards("deck:%s -nid:%s" % (deckname, snids))
       if ids:
           if debugging:
               print("subset ids: %s" % ids)
@@ -836,10 +807,6 @@ search a given deck
       fnotes = ti.foreignNotes()
       return fnotes
 
-  def addtag(ti, fnotes, tag):
-      for i, fn in enumerate(fnotes):
-          fn.tags.append(tag)
-
   def add2col(col, deckname, ti, fnotes):
       # XXX should we remember previously selected deck (and reselect it
       # when we're done here)?
@@ -851,20 +818,17 @@ search a given deck
           col.models.save(ti.model)
       col.decks.select(did)
       ti.importNotes(fnotes)
+      return "(%s)" % ",".join(str(i) for i in ti._ids) # XXX ids we added [ids2str]
 
   def doimport(col, deckname, ifilepath, mapping, dosubset, dosuperset):
-      tag = constag(deckname)     # just run once!
       ti = TextImporter(col, ifilepath)
       ti.allowHTML = True
       ti.initMapping()
       checkmapping(ti, mapping)    # this may abort
       # first, get anki read in the notes (to an intermediate form)
       fnotes = getfnotes(ti)
-      # next, add our tag to the notes (if we need it)
-      if dosuperset | dosubset:
-          addtag(ti, fnotes, tag)
       # now, add these notes to the designated deck
-      add2col(col, deckname, ti, fnotes)
+      snids = add2col(col, deckname, ti, fnotes)
       if ti.log:
           # XXX don't print out all those lines; summarize (print
           # out first 3 lines), give option for paging through
@@ -877,14 +841,11 @@ search a given deck
                       print(utxt, file=logfile)
       del ti                      # no longer to be used
       if dosuperset:
-          # now, move any notes from any *other* decks with this tag to this deck
-          superset(col, deckname, tag)
+          # now, move any notes from any *other* decks with one of our ids to this deck
+          superset(col, deckname, snids)
       if dosubset:
-          # now, delete any notes in deck that do *not* have this tag
-          subset(col, deckname, tag)
-      # now, delete this tag from these cards (no other cards should have this tag)
-      if dosuperset | dosubset:
-          removetag(col, tag)
+          # now, delete any notes in deck that are not one of our ids
+          subset(col, deckname, snids)
       # done!
 
   # http://ankisrs.net/docs/addons.html#the-database
