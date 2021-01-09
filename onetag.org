@@ -459,6 +459,7 @@ list out the notes from a given deck (the name of which is required).
       card = col.getCard(id)
       note = card.note()
       values = list(note.values())
+      bs = "type"
       # http://stackoverflow.com/a/60211
       type = { 0: "new",
                1: "learning",
@@ -470,19 +471,50 @@ list out the notes from a given deck (the name of which is required).
                 0: "",
                 1: "",
                 2: "" }[card.queue]
+      if queue != "":
+          bs = "%s/%s" % (bs, "queue")
       due = card.due
+      bs = "%s/%s" % (bs, "due")
       deckname = ""
       if decknamep:
           deckname = "/%s" % col.decks.get(card.did, default=False)['name']
-          
-      return "%s%s/%s%s: %s" % (type, queue, due, deckname,
-                              unescape("%s\t%s" % (values[0], values[1])))
+          bs = "%s/%s" % (bs, "deckname")
+
+      verbosenesses = {bs: "%s%s/%s%s" % (type, queue, due, deckname)}
+      if (verbosity):
+          # a lot from anki's stats.py
+          first = col.db.scalar(
+              "select min(id) from revlog where cid = ?", card.id)
+          last = col.db.scalar(
+              "select max(id) from revlog where cid = ?", card.id)
+          verbosenesses["added"] = str(card.id/1000)
+          if (first):
+              verbosenesses["first"] = first/1000
+          if (last):
+              verbosenesses["last"] = last/1000
+          verbosenesses["queue"] = card.queue
+          verbosenesses["due"] = card.due
+          verbosenesses["interval=%d"] = str(card.ivl * 86400)
+          verbosenesses["ease=%d"] = str(card.factor/10.0)
+          verbosenesses["reviews=%d"] = str(card.reps)
+          verbosenesses["lapses=%d"] = str(card.lapses)
+          verbosenesses["ctype"] = card.template()["name"]
+          verbosenesses["ntype"] = card.model()["name"]
+          verbosenesses["did"] = card.did
+          verbosenesses["nid"] = card.nid
+          verbosenesses["cid"] = card.id
+
+      rval = []
+      for k,v in verbosenesses.items():
+          rval.append("%s: %s\t%s" % (k, v, unescape("%s\t%s" % (values[0], values[1]))))
+      return rval
 
   def pcards(col, ids, decknamep=False):
       if debugging:
           print(ids)
       for i, id in enumerate(ids):
-          print(fcard(col, id, decknamep))
+          for l in fcard(col, id, decknamep):
+              print(l)
 
   def dopcards(col, deckname, decknamep=False):
       pcards(col, col.findCards("deck:%s" % deckname), decknamep)
