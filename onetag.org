@@ -445,12 +445,17 @@ list out the notes from a given deck (the name of which is required).
 #+name: cards
 #+BEGIN_SRC python :results silent :noweb yes
   import sys
+  import time
+
   sys.path.append("/usr/share/anki")
   sys.path.append("/usr/local/share/anki")
 
   from anki import Collection
 
   <<unescape>>
+
+  def date(t):
+      return time.strftime("%F", time.localtime(t))
 
   def fcard(col, id, decknamep=False):
       card = col.getCard(id)
@@ -487,11 +492,15 @@ list out the notes from a given deck (the name of which is required).
               "select min(id) from revlog where cid = ?", card.id)
           last = col.db.scalar(
               "select max(id) from revlog where cid = ?", card.id)
-          verbosenesses["added"] = str(card.id/1000)
+          verbosenesses["added"] = date(card.id/1000)
           if (first):
-              verbosenesses["first"] = first/1000
+              verbosenesses["first"] = date(first/1000)
           if (last):
-              verbosenesses["last"] = last/1000
+              verbosenesses["last"] = date(last/1000)
+          verbosenesses["odid"] = card.odid
+          if card.queue in (2,3):
+              next = date(time.time()+((card.due - col.sched.today)*86400))
+              verbosenesses["next"] = next
           verbosenesses["type"] = "%s (%s)" % (card.type, type)
           if (card.queue != card.type):
               verbosenesses["queue"] = "%s (%s)" % (card.queue, queue)
