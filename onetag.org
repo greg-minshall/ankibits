@@ -480,7 +480,7 @@ list out the notes from a given deck (the name of which is required).
           deckname = "/%s" % col.decks.get(card.did, default=False)['name']
           bs = "%s/%s" % (bs, "deckname")
 
-      verbosenesses = {bs: "%s%s/%s%s" % (type, queue, due, deckname)}
+      verbosenesses = {}
       if (verbosity):
           # a lot from anki's stats.py
           first = col.db.scalar(
@@ -494,15 +494,19 @@ list out the notes from a given deck (the name of which is required).
               verbosenesses["last"] = last/1000
           verbosenesses["queue"] = card.queue
           verbosenesses["due"] = card.due
-          verbosenesses["interval=%d"] = str(card.ivl * 86400)
-          verbosenesses["ease=%d"] = str(card.factor/10.0)
-          verbosenesses["reviews=%d"] = str(card.reps)
-          verbosenesses["lapses=%d"] = str(card.lapses)
+          verbosenesses["interval"] = str(card.ivl * 86400)
+          verbosenesses["ease"] = str(card.factor/10.0)
+          verbosenesses["reviews"] = str(card.reps)
+          verbosenesses["lapses"] = str(card.lapses)
           verbosenesses["ctype"] = card.template()["name"]
           verbosenesses["ntype"] = card.model()["name"]
           verbosenesses["did"] = card.did
+          verbosenesses["deckname"] = col.decks.get(card.did, default=False)['name']
           verbosenesses["nid"] = card.nid
           verbosenesses["cid"] = card.id
+      else:
+          verbosenesses = {bs: "%s%s/%s%s" % (type, queue, due, deckname)}
+
 
       rval = []
       for k,v in verbosenesses.items():
