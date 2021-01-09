@@ -492,14 +492,17 @@ list out the notes from a given deck (the name of which is required).
               verbosenesses["first"] = first/1000
           if (last):
               verbosenesses["last"] = last/1000
-          verbosenesses["queue"] = card.queue
+          verbosenesses["type"] = "%s (%s)" % (card.type, type)
+          if (card.queue != card.type):
+              verbosenesses["queue"] = "%s (%s)" % (card.queue, queue)
           verbosenesses["due"] = card.due
           verbosenesses["interval"] = str(card.ivl * 86400)
           verbosenesses["ease"] = str(card.factor/10.0)
           verbosenesses["reviews"] = str(card.reps)
           verbosenesses["lapses"] = str(card.lapses)
-          verbosenesses["ctype"] = card.template()["name"]
-          verbosenesses["ntype"] = card.model()["name"]
+          if (verbosity > 1):     # i think these are always the same
+              verbosenesses["ctype"] = card.template()["name"]
+              verbosenesses["ntype"] = card.model()["name"]
           verbosenesses["did"] = card.did
           verbosenesses["deckname"] = col.decks.get(card.did, default=False)['name']
           verbosenesses["nid"] = card.nid
