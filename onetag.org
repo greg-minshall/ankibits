@@ -506,7 +506,7 @@ list out the notes from a given deck (the name of which is required).
           verbosenesses["did"] = card.did
           verbosenesses["deckname"] = col.decks.get(card.did, default=False)['name']
           verbosenesses["nid"] = card.nid
-          verbosenesses["cid"] = card.id
+          verbosenesses["id"] = card.id
       else:
           verbosenesses = {bs: "%s%s/%s%s" % (type, queue, due, deckname)}
 
