@@ -105,6 +105,38 @@ deck['mod'] = m['mod']
   ti.run()
   col.close()
 #+END_SRC
+*** consistency bug?
+
+it seems my deck is always getting reset.  i composed this
+message.  but, then i upgraded to 2.1.35 (from, i think, 2.1.16):
+: /usr/local/share/anki/anki/__init__.py:version="2.1.16" # build scripts grep this line, so preserve formatting
+so, i didn't post the query yet
+#+begin_example
+hi.
+
+my normal usage is to add cards from my scripts on my laptop, launch anki on my laptop to synch to ankiweb, the launch IOS app, synch, study, synch.  repeat.  and, i seem (for maybe several years now?  only now am i trying to track it down) to lose my deck state, so that it's Groundhog Day every day, i seem to start with a fresh deck, end up with 40 non-new cards (i guess this is a good metric?).
+
+so, probably either my work flow, or my scripts, or the combination, are triggering some sort of deck reset.
+
+if up to this point, there's an obvious answer, i'm all ears!  but, if it's not that obvious (other than, "your decks, man!" :), i wonder if this question has an answer:
+
+let there be three systems:
+- LL -- laptop linux
+- AW -- Ankiweb
+- IP -- iphone
+
+(oof, sorry) let Review(IP) be the result of reviewing the deck on IP.  let Modify(LL) be the result of adding/deleting cards on LL.  and, Sync(x) be the result of synching system x with AW.
+
+and, let the three systems start off in a fully consistent state.   
+
+then, should the following two sequences result in the same (globally consistent) state?
+- `Review(); Sync IP; Modify(); Sync LL; Sync IP`
+- `Review(); Sync IP; Sync LL; Modify(); Sync LL; Sync IP`
+
+i've added some debugging to try to track down what is happening.  and, looking over syncing topics, this [forum entry](https://forums.ankiweb.net/t/bug-sync-resetting-new-card-count/5245/2) seems like it might be similar.
+
+okay, thanks.
+#+end_example
 ** random documentation
 
 nice [[http://www.norvig.com/python-lisp.html][comparison]] of Python and Lisp.
@@ -116,6 +148,39 @@ of the rows in addNew is supposed to contain the deck name?
 we could import, then use the _ids in the TextImporter object, or
 just the tags we used, to move the new cards into the deck we want.
 (assuming we figure *that* out! :)
+
+*** git remote issues
+
+[[https://github.blog/2020-12-15-token-authentication-requirements-for-git-operations/][github]] wants to get rid of password authenticated writes.
+
+#+begin_example
+bash apollo2 (master): {49407} git remote -v
+origin  https://github.com/greg-minshall/ankibits.git (fetch)
+origin  https://github.com/greg-minshall/ankibits.git (push)
+#+end_example
+
+i guess, [[https://docs.github.com/en/free-pro-team@latest/github/using-git/changing-a-remotes-url][do this]]
+#+begin_example
+bash apollo2 (master): {49412} git remote set-url origin git@github.com:greg-minshall/ankibits.git
+bash apollo2 (master): {49413} git remote -v
+origin  git@github.com:greg-minshall/ankibits.git (fetch)
+origin  git@github.com:greg-minshall/ankibits.git (push)
+#+end_example
+seems to work
+#+begin_example
+bash apollo2 (master): {49414} git status
+On branch master
+Your branch is up to date with 'origin/master'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        modified:   onetag.org
+
+no changes added to commit (use "git add" and/or "git commit -a")
+bash apollo2 (master): {49415} git push
+Everything up-to-date
+#+end_example
 
 ** code
 *** parameters
