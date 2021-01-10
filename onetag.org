@@ -850,6 +850,16 @@ search a given deck
   <<unescape>>
   <<user_interface>>
 
+  def interactivep():
+    # https://stackoverflow.com/a/2356420/1527747
+    import __main__ as main
+    return not hasattr(main, '__file__')
+    
+  def splitin(string):
+      # https://stackoverflow.com/a/79985/1527747
+      import shlex
+      ankiimportMain(shlex.split(string))
+
   def abort(rc=3):
       import sys
       sys.exit(rc)
@@ -931,7 +941,8 @@ search a given deck
           col.models.save(ti.model)
       col.decks.select(did)
       ti.importNotes(fnotes)
-      return "(%s)" % ",".join(str(i) for i in ti._ids) # XXX ids we added [ids2str]
+      # XXX ids we added [ids2str]
+      return "%s" % ",".join(str(i) for i in ti._ids) # XXX ids we added [ids2str]
 
   def doimport(col, deckname, ifilepath, mapping, dosubset, dosuperset):
       ti = TextImporter(col, ifilepath)
@@ -962,7 +973,7 @@ search a given deck
       # done!
 
   # http://ankisrs.net/docs/addons.html#the-database
-  def main():
+  def ankiimportMain(argv=None):
       import codecs
       import re
       import time
@@ -984,7 +995,7 @@ search a given deck
                           help="file in which to log actions during import (appended)")
       parser.add_argument("inputfile", type=str)
 
-      args, ankipath = myparse(parser)
+      args, ankipath = myparse(parser, argv)
 
       if args.logfile:
           logfile = args.logfile
@@ -1005,7 +1016,8 @@ search a given deck
                    dosubset=args.subset, dosuperset=args.superset)
           cg.commit()
 
-  if __name__ == "__main__":
-      main()
-
+  # https://stackoverflow.com/a/2356420/1527747
+  import __main__ as main
+  if not interactivep():
+      ankiimportMain()
 #+END_SRC
