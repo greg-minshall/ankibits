@@ -476,8 +476,10 @@ is the pathname where Anki collections are stored.
   from anki import Collection
 
   def pdecks(col):
-      for i, val in enumerate(col.decks.allNames()):
-          print(val)
+      for i, val in enumerate(col.decks.all_names_and_ids(
+              skip_empty_default=False,
+              include_filtered=True)):
+          print(val.name)
 #+END_SRC
 
 
