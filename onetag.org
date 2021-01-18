@@ -589,7 +589,7 @@ list out the notes from a given deck (the name of which is required).
 
       rval = []
       for k,v in verbosenesses.items():
-          rval.append("%s: %s\t%s" % (k, v, unescape("%s\t%s" % (values[0], values[1]))))
+          rval.append("%s\t%s\t%s\t%s" % (card.id, k, v, unescape("%s\t%s" % (values[0], values[1]))))
       return rval
 
   def pcards(col, ids, decknamep=False):
