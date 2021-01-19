@@ -555,6 +555,7 @@ list out the notes from a given deck (the name of which is required).
       verbosenesses = {}
       if (verbosity):
           # a lot from anki's stats.py
+          # ~/src/import/anki/dae/git/anki/anki/stats.py (older version)
           first = col.db.scalar(
               "select min(id) from revlog where cid = ?", card.id)
           last = col.db.scalar(
@@ -571,7 +572,21 @@ list out the notes from a given deck (the name of which is required).
           verbosenesses["type"] = "%s (%s)" % (card.type, type)
           if (card.queue != card.type):
               verbosenesses["queue"] = "%s (%s)" % (card.queue, queue)
-          verbosenesses["due"] = card.due
+          # computing "due" is a bit tricky; notice it's possible to
+          # have this result in neither "due" nor "position"
+          if card.type in (1,2):
+              if card.odid or card.queue < 0:
+                  next = None
+              else:
+                  if card.queue in (2,3):
+                      next = time.time()+((card.due - col.sched.today)*86400)
+                  else:
+                      next = card.due
+                  next = time.strftime("%Y-%m-%d", time.localtime(next))
+              if next:
+                  verbosenesses["due"] = next
+          elif card.queue == 0:
+              verbosenesses["position"] = card.due
           verbosenesses["interval"] = str(card.ivl * 86400)
           verbosenesses["ease"] = str(card.factor/10.0)
           verbosenesses["reviews"] = str(card.reps)
@@ -855,7 +870,7 @@ search a given deck
     # https://stackoverflow.com/a/2356420/1527747
     import __main__ as main
     return not hasattr(main, '__file__')
-    
+
   def splitin(string):
       # https://stackoverflow.com/a/79985/1527747
       import shlex
@@ -890,6 +905,8 @@ search a given deck
       if ids:
           if debugging:
               print("superset ids: %s" % ids)
+          if logfile and verbosity:
+              print("superset ids: %s" % ids, file=logfile)
           n = len(ids)
           print("will move %s %s into deck %s" % \
               (n, plurality(len(ids),"card", "cards"), deckname))
@@ -911,6 +928,8 @@ search a given deck
       if ids:
           if debugging:
               print("subset ids: %s" % ids)
+          if logfile and verbosity:
+              print("subset ids: %s" % ids, file=logfile)
           n = len(ids)
           print("will delete %s %s from deck %s" % \
               (n, plurality(len(ids),"card", "cards"), deckname))
