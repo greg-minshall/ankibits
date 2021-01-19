@@ -567,17 +567,19 @@ list out the notes from a given deck (the name of which is required).
           verbosenesses["added"] = date(card.id/1000)
           if (first):
               verbosenesses["first"] = date(first/1000)
+          else:
+              verbosenesses["first"] = float("inf")
           if (last):
               verbosenesses["last"] = date(last/1000)
+          else:
+              verbosenesses["last"] = float("inf")
           verbosenesses["odid"] = card.odid
-          if card.queue in (2,3):
-              next = date(time.time()+((card.due - col.sched.today)*86400))
-              verbosenesses["next"] = next
           verbosenesses["type"] = "%s (%s)" % (card.type, type)
           if (card.queue != card.type):
               verbosenesses["queue"] = "%s (%s)" % (card.queue, queue)
-          # computing "due" is a bit tricky; notice it's possible to
-          # have this result in neither "due" nor "position"
+          else:
+              verbosenesses["queue"] = card.queue
+          # computing "due" is a bit tricky
           next = time.time()
           posn = card.due
           if card.type in (1,2):
@@ -595,10 +597,10 @@ list out the notes from a given deck (the name of which is required).
               next = date(next)
           verbosenesses["due"] = next
           verbosenesses["position"] = posn
-          verbosenesses["interval"] = str(card.ivl * 86400)
-          verbosenesses["ease"] = str(card.factor/10.0)
-          verbosenesses["reviews"] = str(card.reps)
-          verbosenesses["lapses"] = str(card.lapses)
+          verbosenesses["interval"] = card.ivl * 86400
+          verbosenesses["ease"] = card.factor/10.0
+          verbosenesses["reviews"] = card.reps
+          verbosenesses["lapses"] = card.lapses
           if (verbosity > 1):     # i think these are always the same
               verbosenesses["ctype"] = card.template()["name"]
               verbosenesses["ntype"] = card.model()["name"]
