@@ -522,7 +522,38 @@ list out the notes from a given deck (the name of which is required).
   <<unescape>>
 
   def date(t):
-      return time.strftime("%F", time.localtime(t))
+      return time.strftime("%F", time.gmtime(t))
+
+  def datetime(t):
+      return time.strftime("%FT%H:%M:%SZ", time.gmtime(t))
+
+  # the columns we print (in the order we print them)
+  def fcardcols(decknamep=False):
+      if (verbosity):
+          return ["utc",
+                  "cid",
+                  "added",
+                  "first",
+                  "last",
+                  "odid",
+                  "next",
+                  "type",
+                  "due",
+                  "position",
+                  "interval",
+                  "ease",
+                  "reviews lapses",
+                  "ctype",
+                  "ntype",
+                  "did",
+                  "deckname",
+                  "nid",
+                  "front",
+                  "back"]
+      elif decknamep:
+          a =1
+      else:
+          a = 1
 
   def fcard(col, id, decknamep=False):
       card = col.getCard(id)
@@ -544,16 +575,17 @@ list out the notes from a given deck (the name of which is required).
                 1: "",
                 2: "" }[card.queue]
       if queue != "":
-          bs = "%s/%s" % (bs, "queue")
+          bs = "%s\t%s" % (bs, "queue")
       due = card.due
-      bs = "%s/%s" % (bs, "due")
+      bs = "%s\t%s" % (bs, "due")
       deckname = ""
       if decknamep:
-          deckname = "/%s" % col.decks.get(card.did, default=False)['name']
-          bs = "%s/%s" % (bs, "deckname")
+          deckname = "\t%s" % col.decks.get(card.did, default=False)['name']
+          bs = "%s\t%s" % (bs, "deckname")
 
-      verbosenesses = {}
+      verbosenesses = {"utc": datetime(time.time())}
       if (verbosity):
+          verbosenesses["cid"] = card.id
           # a lot from anki's stats.py
           # ~/src/import/anki/dae/git/anki/anki/stats.py (older version)
           first = col.db.scalar(
@@ -574,19 +606,23 @@ list out the notes from a given deck (the name of which is required).
               verbosenesses["queue"] = "%s (%s)" % (card.queue, queue)
           # computing "due" is a bit tricky; notice it's possible to
           # have this result in neither "due" nor "position"
+          next = time.time()
+          posn = card.due
           if card.type in (1,2):
+              posn = float("inf")
               if card.odid or card.queue < 0:
-                  next = None
+                  next = float("inf")
               else:
                   if card.queue in (2,3):
                       next = time.time()+((card.due - col.sched.today)*86400)
                   else:
                       next = card.due
-                  next = time.strftime("%Y-%m-%d", time.localtime(next))
               if next:
                   verbosenesses["due"] = next
-          elif card.queue == 0:
-              verbosenesses["position"] = card.due
+          if next < float("inf"): # if not never
+              next = date(next)
+          verbosenesses["due"] = next
+          verbosenesses["position"] = posn
           verbosenesses["interval"] = str(card.ivl * 86400)
           verbosenesses["ease"] = str(card.factor/10.0)
           verbosenesses["reviews"] = str(card.reps)
@@ -598,20 +634,22 @@ list out the notes from a given deck (the name of which is required).
           verbosenesses["deckname"] = col.decks.get(card.did, default=False)['name']
           verbosenesses["nid"] = card.nid
       else:
-          verbosenesses = {bs: "%s%s/%s%s" % (type, queue, due, deckname)}
+          verbosenesses = {bs: "%s%s\t%s%s" % (type, queue, due, deckname)}
 
 
-      rval = []
+      rval = ""
       for k,v in verbosenesses.items():
-          rval.append("%s\t%s\t%s\t%s" % (card.id, k, v, unescape("%s\t%s" % (values[0], values[1]))))
+          rval = rval + "\t" + str(v)
+        
+      rval = rval + "\t" + unescape(values[0]) + "\t" + unescape(values[1])
       return rval
 
   def pcards(col, ids, decknamep=False):
       if debugging:
           print(ids)
+      print(fcardcols())
       for i, id in enumerate(ids):
-          for l in fcard(col, id, decknamep):
-              print(l)
+          print(fcard(col, id, decknamep))
 
   def dopcards(col, deckname, decknamep=False):
       pcards(col, col.findCards("deck:%s" % deckname), decknamep)
