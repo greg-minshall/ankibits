@@ -527,34 +527,6 @@ list out the notes from a given deck (the name of which is required).
   def datetime(t):
       return time.strftime("%FT%H:%M:%SZ", time.gmtime(t))
 
-  # the columns we print (in the order we print them)
-  def fcardcols(decknamep=False):
-      if (verbosity):
-          return ["utc",
-                  "cid",
-                  "added",
-                  "first",
-                  "last",
-                  "odid",
-                  "next",
-                  "type",
-                  "due",
-                  "position",
-                  "interval",
-                  "ease",
-                  "reviews lapses",
-                  "ctype",
-                  "ntype",
-                  "did",
-                  "deckname",
-                  "nid",
-                  "front",
-                  "back"]
-      elif decknamep:
-          a =1
-      else:
-          a = 1
-
   def fcard(col, id, decknamep=False):
       card = col.getCard(id)
       if debugging:
@@ -636,20 +608,23 @@ list out the notes from a given deck (the name of which is required).
       else:
           verbosenesses = {bs: "%s%s\t%s%s" % (type, queue, due, deckname)}
 
+      verbosenesses["front"] = unescape(values[0])
+      verbosenesses["back"] = unescape(values[1])
 
-      rval = ""
-      for k,v in verbosenesses.items():
-          rval = rval + "\t" + str(v)
-        
-      rval = rval + "\t" + unescape(values[0]) + "\t" + unescape(values[1])
-      return rval
+      for k in verbosenesses.keys():
+          verbosenesses[k] = str(verbosenesses[k])
+      return verbosenesses
 
   def pcards(col, ids, decknamep=False):
       if debugging:
           print(ids)
-      print(fcardcols())
+      didheader = False
       for i, id in enumerate(ids):
-          print(fcard(col, id, decknamep))
+          fc = fcard(col, id, decknamep)
+          if not didheader:
+              print("\t".join(fc.keys()))    # header line
+              didheader = True
+          print("\t".join(fc.values()))  # actual line
 
   def dopcards(col, deckname, decknamep=False):
       pcards(col, col.findCards("deck:%s" % deckname), decknamep)
