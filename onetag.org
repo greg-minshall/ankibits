@@ -346,12 +346,16 @@ to generally change the encoding of standard out.
       import argparse
       import codecs
       import sys
+      import json
 
-      global debugging, verbosity
+      global debugging, verbosity, args
 
       args = parser.parse_args(argv)
       debugging = args.debugging
       verbosity = args.verbosity
+
+      if args.tags:
+          args.tags = json.loads(args.tags)
 
       if debugging > 1:
           print(args)
@@ -393,6 +397,10 @@ to generally change the encoding of standard out.
       parser.add_argument("-v", "--verbosity", action="count",
                           default=0,
                           help="increase level of verbosity")
+      parser.add_argument("--json", action="store_true",
+                          help="output in json format")
+      parser.add_argument("--tags",
+                          help="json object to use to tag entries")
       return parser
 
   # for convenience
@@ -513,6 +521,7 @@ list out the notes from a given deck (the name of which is required).
 #+BEGIN_SRC python :results silent :noweb yes
   import sys
   import time
+  import json
 
   sys.path.append("/usr/share/anki")
   sys.path.append("/usr/local/share/anki")
@@ -534,28 +543,42 @@ list out the notes from a given deck (the name of which is required).
       card = col.getCard(id)
       note = card.note()
       values = list(note.values())
-      bs = "type"
+
+      verbosenesses = {"utc": datetime(time.time())}
       # http://stackoverflow.com/a/60211
       type = { 0: "new",
                1: "learning",
                2: "due" }[card.type]
-      # only print queue if different from card type (above)
-      queue = { -3: "/sched-buried",
-                -2: "/user-buried",
-                -1: "/suspended",
-                0: "",
-                1: "",
-                2: "" }[card.queue]
-      if queue != "":
-          bs = "%s\t%s" % (bs, "queue")
-      due = card.due
-      bs = "%s\t%s" % (bs, "due")
-      deckname = ""
-      if decknamep:
-          deckname = "\t%s" % col.decks.get(card.did, default=False)['name']
-          bs = "%s\t%s" % (bs, "deckname")
-
-      verbosenesses = {"utc": datetime(time.time())}
+      verbosenesses["type"] = "%s (%s)" % (card.type, type)
+      if (card.queue != card.type):
+          queue = { -3: "/sched-buried",
+                    -2: "/user-buried",
+                    -1: "/suspended",
+                    0: "",
+                    1: "",
+                    2: "" }[card.queue]
+          verbosenesses["queue"] = "%s (%s)" % (card.queue, queue)
+      else:
+          verbosenesses["queue"] = card.queue
+      # computing "due" is a bit tricky
+      next = time.time()
+      posn = card.due
+      if card.type in (1,2):
+          posn = float("inf")
+          if card.odid or card.queue < 0:
+              next = float("inf")
+          else:
+              if card.queue in (2,3):
+                  next = time.time()+((card.due - col.sched.today)*86400)
+              else:
+                  next = card.due
+          if next:
+              verbosenesses["due"] = next
+      if next < float("inf"): # if not never
+          next = date(next)
+      verbosenesses["due"] = next
+      if decknamep or verbosity:
+          verbosenesses["deckname"] = col.decks.get(card.did, default=False)['name']
       if (verbosity):
           verbosenesses["cid"] = card.id
           # a lot from anki's stats.py
@@ -575,27 +598,6 @@ list out the notes from a given deck (the name of which is required).
               verbosenesses["last"] = float("inf")
           verbosenesses["odid"] = card.odid
           verbosenesses["type"] = "%s (%s)" % (card.type, type)
-          if (card.queue != card.type):
-              verbosenesses["queue"] = "%s (%s)" % (card.queue, queue)
-          else:
-              verbosenesses["queue"] = card.queue
-          # computing "due" is a bit tricky
-          next = time.time()
-          posn = card.due
-          if card.type in (1,2):
-              posn = float("inf")
-              if card.odid or card.queue < 0:
-                  next = float("inf")
-              else:
-                  if card.queue in (2,3):
-                      next = time.time()+((card.due - col.sched.today)*86400)
-                  else:
-                      next = card.due
-              if next:
-                  verbosenesses["due"] = next
-          if next < float("inf"): # if not never
-              next = date(next)
-          verbosenesses["due"] = next
           verbosenesses["position"] = posn
           verbosenesses["interval"] = card.ivl * 86400
           verbosenesses["ease"] = card.factor/10.0
@@ -607,8 +609,6 @@ list out the notes from a given deck (the name of which is required).
           verbosenesses["did"] = card.did
           verbosenesses["deckname"] = col.decks.get(card.did, default=False)['name']
           verbosenesses["nid"] = card.nid
-      else:
-          verbosenesses = {bs: "%s%s\t%s%s" % (type, queue, due, deckname)}
 
       verbosenesses["front"] = unescape(values[0])
       verbosenesses["back"] = unescape(values[1])
@@ -623,10 +623,15 @@ list out the notes from a given deck (the name of which is required).
       didheader = False
       for i, id in enumerate(ids):
           fc = fcard(col, id, decknamep)
-          if not didheader:
-              print("\t".join(fc.keys()))    # header line
-              didheader = True
-          print("\t".join(fc.values()))  # actual line
+          if args.tags:
+              fc = args.tags | fc
+          if args.json:
+              print(json.dumps(fc, ensure_ascii=False))
+          else:
+              if not didheader:
+                  print("\t".join(fc.keys()))    # header line
+                  didheader = True
+              print("\t".join(fc.values()))  # actual line
 
   def dopcards(col, deckname, decknamep=False):
       pcards(col, col.findCards("deck:%s" % deckname), decknamep)
@@ -1013,7 +1018,7 @@ search a given deck
       import re
       import time
 
-      global args, logfilterpattern, logfile
+      global logfilterpattern, logfile
 
       parser = argparse.ArgumentParser(parents=[myargsdeck()],
                   description="import an HTML file into a deck in an Anki collection")
