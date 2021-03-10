@@ -917,8 +917,9 @@ search a given deck
           for id in ids:
               print("%s%s" % (prefix, fcard(col, id)), file=logfile)
 
-  def superset(col, deckname, snids):
+  def superset(col, deckname, nids):
       """make sure all cards with ids in IDS are in Anki deck DECKNAME"""
+      snids = "%s" % ",".join(str(i) for i in nids) # XXX ids we added [ids2str]    
       did = col.decks.byName(deckname)['id']
       ids = []
       ids = col.findCards("-deck:%s nid:%s" % (deckname, snids))
@@ -940,9 +941,10 @@ search a given deck
           col.decks.setDeck(ids, did)
           col.sched.resetCards(ids)
 
-  def subset(col, deckname, snids):
+  def subset(col, deckname, nids):
       """make sure only cards with tag TAG are in Anki deck DECKNAME"""
       # XXX just deletes the cards; nicer might be to stash them somewhere
+      snids = "%s" % ",".join(str(i) for i in nids) # XXX ids we added [ids2str]
       ids = []
       ids = col.findCards("deck:%s -nid:%s" % (deckname, snids))
       if ids:
@@ -982,7 +984,7 @@ search a given deck
       col.decks.select(did)
       ti.importNotes(fnotes)
       # XXX ids we added [ids2str]
-      return "%s" % ",".join(str(i) for i in ti._ids) # XXX ids we added [ids2str]
+      return ti._ids
 
   def doimport(col, deckname, ifilepath, mapping, dosubset, dosuperset):
       ti = TextImporter(col, ifilepath)
@@ -992,7 +994,7 @@ search a given deck
       # first, get anki read in the notes (to an intermediate form)
       fnotes = getfnotes(ti)
       # now, add these notes to the designated deck
-      snids = add2col(col, deckname, ti, fnotes)
+      nids = add2col(col, deckname, ti, fnotes)
       if ti.log:
           # XXX don't print out all those lines; summarize (print
           # out first 3 lines), give option for paging through
@@ -1006,10 +1008,10 @@ search a given deck
       del ti                      # no longer to be used
       if dosuperset:
           # now, move any notes from any *other* decks with one of our ids to this deck
-          superset(col, deckname, snids)
+          superset(col, deckname, nids)
       if dosubset:
           # now, delete any notes in deck that are not one of our ids
-          subset(col, deckname, snids)
+          subset(col, deckname, nids)
       # done!
 
   # http://ankisrs.net/docs/addons.html#the-database
